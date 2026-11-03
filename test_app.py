@@ -30,5 +30,10 @@ class Workflow(unittest.TestCase):
         self.assertEqual(self.call(self.a,'records/sessions/'+s['id'],body|{'operation_id':'other'},'PUT').status_code,403)
         self.assertEqual(self.call(self.b,'records/sessions/'+s['id'],body|{'operation_id':'stale'},'PUT').status_code,409)
         self.assertEqual(self.a.post('/api/logout').status_code,400)
+        token=self.a.get('/api/context').json['data']['csrf_token']
+        response=self.a.post('/api/logout',headers={'X-CSRF-Token':token,'Content-Type':'application/json'})
+        self.assertEqual(response.status_code,200)
+        self.assertIsNone(self.a.get('/api/context').json['data']['user'])
+        self.assertEqual(self.a.get('/api/records/clients').status_code,401)
 if __name__=='__main__': unittest.main()
 

@@ -79,8 +79,8 @@ def context():
 @app.post('/api/<action>')
 def auth(action):
     if action not in ('register','login','logout'): abort(404)
-    d=request.get_json() or {}
     if action=='logout': session.clear(); return jsonify(data=True)
+    d=request.get_json() or {}
     email=str(d.get('email','')).strip().lower(); password=d.get('password','')
     with db() as c:
         if action=='register':

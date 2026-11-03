@@ -46,9 +46,24 @@ if(view==='History'){if(trainer)h.append(act('+ Past workout',()=>start(null,tru
 if(view==='Body weight'){if(trainer)h.append(act('+ Log weight',()=>weightForm(),'primary'));cards(data.weights,(c,r)=>{c.insertAdjacentHTML('beforeend',`<h2>${esc(r.data.weight_lb)} <small>lb</small></h2>`);if(trainer)buttons(c,[['Correct',()=>weightForm(r)]])},'No body-weight measurements yet.')}
 if(view==='Invitations')cards(data.invitations,(c,r)=>{c.insertAdjacentHTML('beforeend',`<span class="badge">${esc(r.data.status)}</span><p>${esc(r.data.trainer_name)}</p>`);if(!trainer&&r.data.status==='pending')buttons(c,[['Accept',()=>mutation('invitations',{decision:'accept'},r.id).then(refresh)],['Decline',()=>mutation('invitations',{decision:'decline'},r.id).then(refresh)]])},'No invitations yet.');$('#content').insertAdjacentHTML('beforeend','<footer>REPFLOW · TRAINER PROGRESS TRACKER &nbsp; / &nbsp; ONE SESSION AT A TIME</footer>')}
 function auth(register=false){accountActions(false);$('#logout').hidden=true;$('#nav').innerHTML='';$('#content').innerHTML=`<div class="auth"><span class="badge">WELCOME TO REPFLOW</span><h1>${register?'Create your account':'Sign in to RepFlow'}</h1><p>Your training, your clients, your progress. Together.</p><form id="authform">${register?input('name','Your name','text','','required')+'<label>Your role</label><select name="role"><option value="trainer">Personal trainer</option><option value="client">Client</option></select>':''}${input('email','Email address','email','','required')}${input('password','Password','password','','required minlength="8"')}<p id="autherror" role="alert"></p><button class="primary" style="width:100%;margin-top:20px">${register?'Create account':'Sign in'}</button></form><div id="switch" class="actions"></div></div>`;$('#switch').append(act(register?'Already have an account? Sign in':'New here? Create an account',()=>auth(!register)));$('#authform').onsubmit=async e=>{e.preventDefault();try{me=await api(register?'register':'login','POST',Object.fromEntries(new FormData(e.target)));await local('put','account',me);await refresh()}catch(e){$('#autherror').textContent=e.message}}}
-$('#logout').onclick=async()=>{try{if((await local('get','queue:'+me.id)||[]).length)throw Error('Sync pending workout results before signing out.');await api('logout','POST');for(let s of data.sessions)await local('delete','draft:'+me.id+':'+s.id);await local('delete','snapshot:'+me.id);await local('delete','account');me=null;await boot()}catch(e){toast(e.message)}};
+let signingOut=false;
+async function signOut(){
+if(signingOut||!me)return;signingOut=true;
+try{
+ const accountId=me.id;
+ if(!navigator.onLine)throw Error('Connect to the internet before signing out. Your workouts are saved on this device.');
+ await sync();
+ if((await local('get','queue:'+accountId)||[]).length)throw Error('Some workouts are waiting to sync. Reconnect and try signing out again.');
+ const context=await api('context');csrf=context.csrf_token;
+ if(context.user)await api('logout','POST');
+ me=null;data={};selected='';view='Overview';$('#identity').textContent='';auth();
+ await new Promise((resolve,reject)=>{const tx=database.transaction('store','readwrite');const store=tx.objectStore('store');const req=store.openCursor();req.onsuccess=()=>{const cur=req.result;if(!cur)return;const key=String(cur.key);if(key==='account'||key==='snapshot:'+accountId||key==='queue:'+accountId||key.startsWith('draft:'+accountId+':'))cur.delete();cur.continue()};tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});
+ const fresh=await api('context');csrf=fresh.csrf_token;toast('You have been signed out.');
+}catch(e){toast(e.message)}finally{signingOut=false}
+}
+$('#logout').onclick=signOut;
 async function boot(){try{let c=await api('context');csrf=c.csrf_token;me=c.user;if(!me)await local('delete','account')}catch{me=await local('get','account')}if(me){await sync();await refresh()}else auth()}
 window.addEventListener('online',async()=>{await sync();await refresh()});window.addEventListener('offline',()=>render());if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');boot();
 
 
-function accountActions(signedIn){const el=$('#account-actions');el.replaceChildren();if(signedIn){el.append(act('Sign out',()=>$('#logout').click()));}else{el.append(act('Sign in',()=>auth(false)),act('Create account',()=>auth(true),'primary'));}}
+function accountActions(signedIn){const el=$('#account-actions');el.replaceChildren();if(signedIn){el.append(act('Sign out',signOut));}else{el.append(act('Sign in',()=>auth(false)),act('Create account',()=>auth(true),'primary'));}}
