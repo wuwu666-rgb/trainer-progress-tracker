@@ -1,8 +1,5 @@
 # Trainer Progress Tracker — Repbook MVP
 
-An English-language, mobile-friendly web app for personal trainers and clients. Plan workouts, record each set, and keep training history in one place.
-
-This implementation follows the **Group 5 MVP Project Plan (October 27, 2026), Fall 2026**. The plan targets a classroom demonstration on November 10, 2026.
 
 **Status: working local MVP. Public HTTPS deployment and physical iPhone/Android acceptance testing are still outstanding. Uploading this repository to GitHub does not deploy the application.**
 
