@@ -1,0 +1,12 @@
+vendor/
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.sqlite3-*
+.secret
+.env
+.env.*
+.venv/
+*.log
+tmp*/
+preview.png
