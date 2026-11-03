@@ -36,17 +36,38 @@ Weights use **pounds (lb)**. Date validation uses **America/New_York**. Registra
 
 Requires **Python 3.10+**. `vendor/` contains local runtime dependencies and their license metadata, but not a Python interpreter.
 
-1. Clone the repository or download and extract its ZIP.
-2. On Windows, double-click `start.bat`. Or run from the project directory:
+### Windows: step-by-step
+
+1. On this GitHub page, select **Code → Download ZIP**.
+2. Right-click the downloaded ZIP and choose **Extract All**. Open the extracted project folder; do not run the app from inside the ZIP.
+3. Double-click **`start.bat`** (Windows may display it as **start** when file extensions are hidden).
+4. Wait for **`Running on http://127.0.0.1:5055`**. Keep this terminal window open; minimizing it is fine.
+5. Open **http://127.0.0.1:5055** in a browser on the same computer.
+6. Select **Use trainer demo → Sign in**, or **Use client demo → Sign in**. To register your own account, select **New here? Create an account**.
+
+### Run from a terminal
+
+Open a terminal in the extracted project folder and run:
 
    ```sh
    python run.py --demo
    ```
 
-3. Keep the terminal open and visit **http://127.0.0.1:5055**.
-4. Use a demo account or select **New here? Create an account**.
+On Windows, if `python` is not recognized but the Python launcher is installed, use `py -3 run.py --demo`. On macOS/Linux, use `python3 run.py --demo` when that is the interpreter command available.
 
 Run `python run.py` to start without initializing demo data. Repeated demo initialization does not reset existing accounts. Closing the terminal stops the backend, even if the browser can still display a cached page.
+
+### Startup troubleshooting
+
+| What you see | What to do |
+| --- | --- |
+| Python is missing or not recognized | Install Python 3.10+ and reopen the terminal, then try again. |
+| `Failed to fetch` during login or registration | Check that the server terminal is still running. Restart `start.bat` if it stopped, then refresh the browser. |
+| A development-server warning | This is expected for local demonstrations; it is not a startup failure. |
+| Port 5055 is already in use | Check whether the app is already running in another terminal. Use the existing instance instead of launching a second copy. |
+| The URL does not work on a phone or another computer | `127.0.0.1` refers to that device itself. This local setup does not provide remote access; see the deployment section. |
+
+Each teammate can run their own local copy, but separate installations do not automatically share accounts or records.
 
 ### Standard development environment
 
