@@ -13,3 +13,17 @@ CREATE TABLE IF NOT EXISTS workouts (
 );
 
 INSERT OR IGNORE INTO clients (id, name) VALUES (1, 'Sample Client');
+
+CREATE TABLE IF NOT EXISTS templates (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS template_exercises (
+    template_id INTEGER NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    target_sets INTEGER NOT NULL CHECK (target_sets > 0),
+    target_reps INTEGER NOT NULL CHECK (target_reps > 0),
+    PRIMARY KEY (template_id, position)
+);

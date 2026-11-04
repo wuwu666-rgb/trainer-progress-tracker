@@ -1,6 +1,44 @@
 {% extends "base.html" %}
+{% macro exercise_fields(exercise='', sets='', reps='') %}
+<fieldset class="exercise-card">
+  <legend>Exercise</legend>
+  <label>Exercise name <input name="exercise" value="{{ exercise }}" required></label>
+  <div class="exercise-targets">
+    <label>Sets <input type="number" name="target_sets" inputmode="numeric" min="1" step="1" value="{{ sets }}" required></label>
+    <label>Reps per set <input type="number" name="target_reps" inputmode="numeric" min="1" step="1" value="{{ reps }}" required></label>
+  </div>
+  <button type="button" data-remove-exercise>Remove exercise</button>
+</fieldset>
+{% endmacro %}
 {% block content %}
-<p class="badge">Planned feature</p>
 <h1>Workout plans</h1>
-<p>This is the entry point for reusable workout templates, individual plans, and client assignments.</p>
+
+<h2>Create a workout template</h2>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+<form method="post" class="template-form">
+  <label>Template name <input name="name" value="{{ name }}" required></label>
+  <div id="exercise-list">
+    {% for exercise, sets, reps in rows %}
+      {{ exercise_fields(exercise, sets, reps) }}
+    {% endfor %}
+  </div>
+  <button type="button" id="add-exercise">Add exercise</button>
+  <button type="submit">Save template</button>
+</form>
+<template id="exercise-fields">{{ exercise_fields() }}</template>
+
+<h2>Saved templates</h2>
+{% for template in templates %}
+<section class="saved-template">
+  <h3>{{ template.name }}</h3>
+  <ol>
+    {% for exercise in template.exercises %}
+      <li>{{ exercise.name }} · {{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps</li>
+    {% endfor %}
+  </ol>
+</section>
+{% else %}
+<p>No workout templates yet.</p>
+{% endfor %}
+<script src="{{ url_for('static', filename='planning.js') }}" defer></script>
 {% endblock %}
