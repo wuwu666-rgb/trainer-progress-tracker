@@ -1,7 +1,11 @@
 from pathlib import Path
+import os
+import secrets
 import sqlite3
 
 from flask import Flask, g, render_template
+
+from auth import bp as auth, csrf_token
 
 from clients import bp as clients
 from planning import bp as planning
@@ -11,7 +15,13 @@ from history import bp as history
 app = Flask(__name__)
 app.config["DATABASE"] = Path(__file__).with_name("trainer.sqlite3")
 
-for blueprint in (clients, planning, sessions, history):
+app.config.update(
+    SECRET_KEY=os.environ.get("REPBOOK_SECRET_KEY") or secrets.token_hex(32),
+    SESSION_COOKIE_SAMESITE="Lax",
+)
+app.jinja_env.globals["csrf_token"] = csrf_token
+
+for blueprint in (auth, clients, planning, sessions, history):
     app.register_blueprint(blueprint)
 
 
