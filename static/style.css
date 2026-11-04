@@ -7,15 +7,16 @@ a { color: #6532a5; }
 section, form { padding: 1rem; margin-block: 1rem; border: 1px solid #ddccef; border-radius: .75rem; background: white; }
 h2 { margin-top: 0; }
 form { display: grid; gap: .85rem; max-width: 28rem; }
-input { display: block; width: 100%; padding: .6rem; border: 1px solid #9076ac; border-radius: .35rem; font: inherit; }
+input, .role-select { display: block; width: 100%; padding: .6rem; border: 1px solid #9076ac; border-radius: .35rem; font: inherit; }
 button, .button { display: inline-block; padding: .55rem .85rem; background: #6532a5; color: white; border: 0; border-radius: .35rem; text-decoration: none; font: inherit; cursor: pointer; }
+.role-select { min-height: 44px; color: inherit; background: white; }
 section .button { margin-right: .5rem; }
 .badge { color: #6532a5; font-weight: 650; }
 [role=alert] { color: #a12121; }
 
 header > a { font-weight: 750; text-decoration: none; }
 button:hover, .button:hover { background: #512486; }
-a:focus-visible, button:focus-visible, input:focus-visible {
+a:focus-visible, button:focus-visible, input:focus-visible, .role-select:focus-visible {
   outline: 2px solid #7641b7;
   outline-offset: 3px;
 }
