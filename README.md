@@ -12,7 +12,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe app.py
 ```
 
-Open http://127.0.0.1:5000. Choose **Clients → Sample Client → Record training**, save one set, and verify it appears under **Training history**. The first start creates `trainer.sqlite3`. Saved records persist between restarts.
+Open [Repbook](http://127.0.0.1:5000/). Choose **Clients → Sample Client → Record training**, save one set, and verify it appears under **Training history**. The first start creates `trainer.sqlite3`. Saved records persist between restarts.
 
 ## Local demo accounts
 
