@@ -10,9 +10,15 @@
   <header>
     <a href="{{ url_for('home') }}">Repbook</a>
     <nav aria-label="Main navigation">
+      {% if g.user and g.user.role == "trainer" %}
       <a href="{{ url_for('clients.index') }}">Clients</a>
       <a href="{{ url_for('planning.index') }}">Workout plans</a>
+      {% endif %}
+      {% if g.user %}
+      {% else %}
+      <a href="{{ url_for('auth.login') }}">Log in</a>
       <a href="{{ url_for('auth.register') }}">Register</a>
+      {% endif %}
     </nav>
   </header>
   <main>{% block content %}{% endblock %}</main>
