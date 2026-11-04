@@ -1,6 +1,6 @@
 # Repbook
 
-Runnable Flask and SQLite starter for the team. Use sample data on localhost. The starter has no authentication or access controls.
+Runnable Flask and SQLite starter for the team. Use sample data on localhost. Sign in as a demo trainer to try the sample workflow.
 
 ## Run locally
 
@@ -13,6 +13,18 @@ python -m venv .venv
 ```
 
 Open http://127.0.0.1:5000. Choose **Clients → Sample Client → Record training**, save one set, and verify it appears under **Training history**. The first start creates `trainer.sqlite3`. Saved records persist between restarts.
+
+## Local demo accounts
+
+Running `app.py` creates these accounts in your local SQLite database on first use. Open the login page and use either account.
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Trainer | `demo-trainer-84d617@example.com` | `JsL_iMYZv-B1aFeo` |
+| Client | `demo-client-2c4784@example.com` | `T0Pujje4zsgrNaDL` |
+
+These credentials are public and intended for local demos with sample data. Deployment initialization uses `init_database()` without demo accounts. Repeated startup preserves existing accounts.
+
 
 ## Team handoff
 

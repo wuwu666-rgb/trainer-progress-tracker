@@ -5,6 +5,8 @@ import sqlite3
 
 from flask import Flask, abort, g, redirect, render_template, request, url_for
 
+from werkzeug.security import generate_password_hash
+
 from auth import bp as auth, csrf_token, load_user
 
 from clients import bp as clients
@@ -54,11 +56,25 @@ def home():
     return render_template("home.html")
 
 
-def init_database():
+def init_database(*, seed_demo=False):
     with sqlite3.connect(app.config["DATABASE"]) as db:
         db.executescript(Path(__file__).with_name("schema.sql").read_text(encoding="utf-8"))
 
 
+        if seed_demo:
+            for name, email, password, role in (
+                ("Demo Trainer", "demo-trainer-84d617@example.com", "JsL_iMYZv-B1aFeo", "trainer"),
+                ("Demo Client", "demo-client-2c4784@example.com", "T0Pujje4zsgrNaDL", "client"),
+            ):
+                if db.execute("SELECT 1 FROM users WHERE email = ?", (email,)).fetchone():
+                    continue
+                db.execute(
+                    "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?) "
+                    "ON CONFLICT(email) DO NOTHING",
+                    (name, email, generate_password_hash(password), role),
+                )
+
+
 if __name__ == "__main__":
-    init_database()
+    init_database(seed_demo=True)
     app.run()
