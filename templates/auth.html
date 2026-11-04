@@ -13,15 +13,15 @@
   <label>Email <input type="email" name="email" value="{{ request.form.get('email', '') }}" autocomplete="email" required></label>
   <label>Password <input type="password" name="password" maxlength="256" autocomplete="{{ 'new-password' if registering else 'current-password' }}" required></label>
   {% if registering %}
-  <fieldset>
-    <legend>Role</legend>
-    <select name="role" aria-label="Role" required>
+  <label for="account-role">
+    Role
+    <select id="account-role" class="role-select" name="role" required>
       <option value="">Select your role</option>
       {% for role in ("trainer", "client") %}
       <option value="{{ role }}"{% if request.form.get("role") == role %} selected{% endif %}>{{ role|capitalize }}</option>
       {% endfor %}
     </select>
-  </fieldset>
+  </label>
   {% endif %}
   <button type="submit">{{ "Create account" if registering else "Log in" }}</button>
 </form>
