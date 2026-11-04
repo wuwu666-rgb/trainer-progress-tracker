@@ -2,9 +2,20 @@ import re
 import secrets
 
 from flask import Blueprint, abort, g, redirect, render_template, request, session, url_for
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 bp = Blueprint("auth", __name__)
+
+
+def load_user():
+    user_id = session.get("user_id")
+    g.user = None
+    if user_id is not None:
+        g.user = g.db.execute(
+            "SELECT id, name, role FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        if g.user is None:
+            session.clear()
 
 
 def csrf_token():
@@ -22,6 +33,9 @@ def check_csrf():
 
 @bp.route("/register", methods=["GET", "POST"])
 def register():
+    if g.user is not None:
+        return redirect(url_for("home"))
+
     error = None
     if request.method == "POST":
         check_csrf()
@@ -42,7 +56,29 @@ def register():
                     (name, email, generate_password_hash(password), role),
                 )
             if result.rowcount:
-                return redirect(url_for("auth.register", registered=1))
+                return redirect(url_for("auth.login", registered=1))
             error = "An account already uses that email address."
 
     return render_template("auth.html", registering=True, error=error), 400 if error else 200
+
+
+@bp.route("/login", methods=["GET", "POST"])
+def login():
+    if g.user is not None:
+        return redirect(url_for("home"))
+
+    error = None
+    if request.method == "POST":
+        check_csrf()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        user = g.db.execute(
+            "SELECT id, password_hash FROM users WHERE email = ?", (email,)
+        ).fetchone()
+        if user and len(password) <= 256 and check_password_hash(user["password_hash"], password):
+            session.clear()
+            session["user_id"] = user["id"]
+            return redirect(url_for("home"))
+        error = "Email or password is incorrect."
+
+    return render_template("auth.html", registering=False, error=error), 400 if error else 200

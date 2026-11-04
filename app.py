@@ -3,9 +3,9 @@ import os
 import secrets
 import sqlite3
 
-from flask import Flask, g, render_template
+from flask import Flask, abort, g, redirect, render_template, request, url_for
 
-from auth import bp as auth, csrf_token
+from auth import bp as auth, csrf_token, load_user
 
 from clients import bp as clients
 from planning import bp as planning
@@ -30,6 +30,12 @@ def open_database():
     g.db = sqlite3.connect(app.config["DATABASE"])
     g.db.row_factory = sqlite3.Row
     g.db.execute("PRAGMA foreign_keys = ON")
+    load_user()
+    if request.blueprint in ("clients", "planning", "sessions", "history"):
+        if g.user is None:
+            return redirect(url_for("auth.login"))
+        if g.user["role"] != "trainer":
+            abort(403)
 
 
 @app.teardown_appcontext
@@ -41,6 +47,10 @@ def close_database(error):
 
 @app.get("/")
 def home():
+    if g.user is None:
+        return redirect(url_for("auth.login"))
+    if g.user["role"] == "client":
+        return render_template("client_home.html")
     return render_template("home.html")
 
 
