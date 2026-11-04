@@ -19,3 +19,4 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   outline: 2px solid #7641b7;
   outline-offset: 3px;
 }
+header .logout-form { display: inline; margin: 0; padding: 0; border: 0; background: none; }

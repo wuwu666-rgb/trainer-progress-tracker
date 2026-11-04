@@ -82,3 +82,10 @@ def login():
         error = "Email or password is incorrect."
 
     return render_template("auth.html", registering=False, error=error), 400 if error else 200
+
+
+@bp.post("/logout")
+def logout():
+    check_csrf()
+    session.clear()
+    return redirect(url_for("auth.login"))
