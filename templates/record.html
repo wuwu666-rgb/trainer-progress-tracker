@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Record training</h1>
+<p>{{ client.name }} · One set per demo record</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+<form method="post">
+  <label>Date <input type="date" name="workout_date" required max="{{ today }}" value="{{ request.form.get('workout_date', today) }}"></label>
+  <label>Exercise <input name="exercise" required value="{{ request.form.get('exercise', '') }}"></label>
+  <label>Reps <input type="number" name="reps" required min="1" value="{{ request.form.get('reps', '') }}"></label>
+  <label>Weight (lb) <input type="number" name="weight_lb" required min="0" step="any" value="{{ request.form.get('weight_lb', '') }}"></label>
+  <button>Save set</button>
+</form>
+{% endblock %}

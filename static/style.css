@@ -1,0 +1,21 @@
+* { box-sizing: border-box; }
+body { margin: 0; color: #2c1942; background: #f7f2ff; font: 1rem/1.5 system-ui, sans-serif; }
+header, main { max-width: 48rem; margin: auto; padding: 1.25rem; }
+header, nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+header { justify-content: space-between; border-bottom: 1px solid #ddccef; }
+a { color: #6532a5; }
+section, form { padding: 1rem; margin-block: 1rem; border: 1px solid #ddccef; border-radius: .75rem; background: white; }
+h2 { margin-top: 0; }
+form { display: grid; gap: .85rem; max-width: 28rem; }
+input { display: block; width: 100%; padding: .6rem; border: 1px solid #9076ac; border-radius: .35rem; font: inherit; }
+button, .button { display: inline-block; padding: .55rem .85rem; background: #6532a5; color: white; border: 0; border-radius: .35rem; text-decoration: none; font: inherit; cursor: pointer; }
+section .button { margin-right: .5rem; }
+.badge { color: #6532a5; font-weight: 650; }
+[role=alert] { color: #a12121; }
+
+header > a { font-weight: 750; text-decoration: none; }
+button:hover, .button:hover { background: #512486; }
+a:focus-visible, button:focus-visible, input:focus-visible {
+  outline: 2px solid #7641b7;
+  outline-offset: 3px;
+}

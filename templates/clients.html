@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Clients</h1>
+{% for client in clients %}
+<section>
+  <h2>{{ client.name }}</h2>
+  <a class="button" href="{{ url_for('sessions.record', client_id=client.id) }}">Record training</a>
+  <a href="{{ url_for('history.index', client_id=client.id) }}">View history</a>
+</section>
+{% else %}
+<p>No clients yet.</p>
+{% endfor %}
+{% endblock %}

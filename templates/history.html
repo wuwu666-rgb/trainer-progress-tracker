@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Training history</h1>
+<p>{{ client.name }}</p>
+<a class="button" href="{{ url_for('sessions.record', client_id=client.id) }}">Record another set</a>
+{% for workout in workouts %}
+<section>
+  <h2>{{ workout.exercise }}</h2>
+  <p>{{ workout.workout_date }} · {{ workout.reps }} reps · {{ workout.weight_lb }} lb</p>
+</section>
+{% else %}
+<p>No training records yet.</p>
+{% endfor %}
+{% endblock %}

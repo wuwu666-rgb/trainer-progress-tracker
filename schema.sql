@@ -1,10 +1,15 @@
-PRAGMA journal_mode=WAL;
-CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT NOT NULL UNIQUE,password_hash TEXT NOT NULL,role TEXT NOT NULL CHECK(role IN ('trainer','client')),created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS client_profiles(id TEXT PRIMARY KEY,trainer_id TEXT NOT NULL REFERENCES users(id),client_user_id TEXT UNIQUE REFERENCES users(id),name TEXT NOT NULL,goals TEXT,created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS invitations(id TEXT PRIMARY KEY,profile_id TEXT NOT NULL REFERENCES client_profiles(id),trainer_id TEXT NOT NULL REFERENCES users(id),client_user_id TEXT NOT NULL REFERENCES users(id),status TEXT NOT NULL CHECK(status IN ('pending','accepted','declined')),created_at TEXT NOT NULL);
-CREATE UNIQUE INDEX IF NOT EXISTS pending_profile ON invitations(profile_id) WHERE status='pending';
-CREATE TABLE IF NOT EXISTS templates(id TEXT PRIMARY KEY,trainer_id TEXT NOT NULL REFERENCES users(id),name TEXT NOT NULL,exercises TEXT NOT NULL,created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS plans(id TEXT PRIMARY KEY,profile_id TEXT NOT NULL REFERENCES client_profiles(id),trainer_id TEXT NOT NULL REFERENCES users(id),source_template_id TEXT REFERENCES templates(id),name TEXT NOT NULL,exercises TEXT NOT NULL,created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY,profile_id TEXT NOT NULL REFERENCES client_profiles(id),plan_id TEXT UNIQUE REFERENCES plans(id),recorder_user_id TEXT NOT NULL REFERENCES users(id),recorder_device_id TEXT NOT NULL,name TEXT NOT NULL,source TEXT NOT NULL,status TEXT NOT NULL,workout_date TEXT NOT NULL,version INTEGER NOT NULL,exercises TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS body_weights(id TEXT PRIMARY KEY,profile_id TEXT NOT NULL REFERENCES client_profiles(id),recorded_by TEXT NOT NULL REFERENCES users(id),measurement_date TEXT NOT NULL,weight_lb TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(profile_id,measurement_date));
-CREATE TABLE IF NOT EXISTS operation_receipts(operation_id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),request_hash TEXT NOT NULL,response_json TEXT NOT NULL,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS clients (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS workouts (
+    id INTEGER PRIMARY KEY,
+    client_id INTEGER NOT NULL REFERENCES clients(id),
+    workout_date TEXT NOT NULL,
+    exercise TEXT NOT NULL,
+    reps INTEGER NOT NULL CHECK (reps > 0),
+    weight_lb TEXT NOT NULL
+);
+
+INSERT OR IGNORE INTO clients (id, name) VALUES (1, 'Sample Client');

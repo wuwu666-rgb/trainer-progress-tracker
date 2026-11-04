@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="badge">Local prototype</p>
+<h1>Trainer dashboard</h1>
+<p>Choose a sample client to record a set and review training history.</p>
+<a class="button" href="{{ url_for('clients.index') }}">Open client list</a>
+{% endblock %}
