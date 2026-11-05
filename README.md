@@ -1,42 +1,54 @@
 # Repbook
 
-Runnable Flask and SQLite starter for the team. Use sample data on localhost. Sign in as a demo trainer to try the sample workflow.
+Repbook is a mobile-friendly workout tracker for trainers and clients. Trainers manage client profiles, create reusable templates, assign workout plans, and record training. Clients can accept trainer invitations, see assigned workouts, and review saved training in **Progress**.
 
 ## Run locally
 
-With Python 3.10 or newer installed:
+Install Python 3.10 or newer, clone this repository, and open its root folder in VS Code or a terminal.
+
+### Windows PowerShell
 
 ```powershell
-python -m venv .venv
+py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe app.py
 ```
 
-Open [Repbook](http://127.0.0.1:5000/). Choose **Clients → Sample Client → Record training**, save one set, and verify it appears under **Training history**. The first start creates `trainer.sqlite3`. Saved records persist between restarts.
+If your Python installation provides `python` instead of `py`, run `python -m venv .venv` for the first step.
+
+### macOS or Linux
+
+```bash
+python3 -m venv .venv
+./.venv/bin/python -m pip install -r requirements.txt
+./.venv/bin/python app.py
+```
+
+Keep the terminal running and open [Repbook](http://127.0.0.1:5000/login) in your browser. Use the address printed by Flask if you started it on another port. After the initial setup, rerun only the last command to start the app again.
 
 ## Local demo accounts
 
-Running `app.py` creates these accounts in your local SQLite database on first use. Open the login page and use either account.
+Starting `app.py` creates these demo accounts in your local database.
 
 | Role | Email | Password |
 | --- | --- | --- |
 | Trainer | `demo-trainer-84d617@example.com` | `JsL_iMYZv-B1aFeo` |
 | Client | `demo-client-2c4784@example.com` | `T0Pujje4zsgrNaDL` |
 
-These credentials are public and intended for local demos with sample data. Deployment initialization uses `init_database()` without demo accounts. Repeated startup preserves existing accounts.
+These public credentials are for local demos with sample data. Each checkout uses its own `trainer.sqlite3` database. Saved records persist between restarts, and startup applies supported database upgrades.
 
+## Try the trainer-to-client flow
 
-## Team handoff
+1. Sign in as the **Demo Trainer**. Go to **Clients → Invitations**, enter the Demo Client email, and send an invitation. You can create a profile as part of the invitation or select an existing unlinked profile.
+2. Sign in as the **Demo Client**. Open **Invitations** from the homepage and accept the invitation.
+3. Sign back in as the trainer. In **Plans**, choose **Create plan from scratch** or use **Create plan from template** on a saved template. Assign the plan to the linked client. Later template edits leave previously copied plans intact.
+4. From **Clients**, choose **Record training** on that client’s card. Save a strength record with reps and weight, or a cardio record with duration and optional distance.
+5. Sign in as the client. **Workouts** shows assigned plans. **Progress** shows saved training records.
 
-| Slice | Starting files | Next work |
-| --- | --- | --- |
-| Accounts and clients | `clients.py`, `templates/clients.html` | Registration, login, client profile editing, invitations, and shared server-side access checks. Add an `auth.py` blueprint. |
-| Planning and templates | `planning.py`, `templates/planning.html` | Template editing, individual workout plans, and client assignments. |
-| Workout recording | `sessions.py`, `templates/record.html` | Multiple exercises and sets per session, coach-led and independent sessions, past workout entry and corrections. |
-| History and body weight | `history.py`, `templates/history.html` | History details, body-weight records, and deployment. |
+## Project status
 
-The SQLite schema is for the demo flow. Before changing shared tables, agree on the data model and route contracts from the Project Plan, especially how plans, sessions, and set results relate. Coordinate shared changes to `app.py`, `schema.sql`, and `templates/base.html` across slices. SQLite's `CREATE TABLE IF NOT EXISTS` does not migrate an existing database. Agree on a migration strategy as the shared schema evolves.
+The public HTTPS deployment is pending. GitHub hosts the source code, and the link above opens a local development server on your computer.
 
-## Deferred scope
+The current recorder saves one exercise entry at a time. Full multi-exercise sessions, independent client recording, corrections, and body-weight tracking are still planned. Offline recording, recovery, and synchronization are deferred.
 
-Offline recording, recovery, and synchronization are deferred. The current release uses the Flask server and SQLite for saving and reading records.
+See [Issue #1](https://github.com/wuwu666-rgb/trainer-progress-tracker/issues/1) for task ownership and completion status.
