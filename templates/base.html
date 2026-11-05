@@ -10,8 +10,19 @@
   <header>
     <a href="{{ url_for('home') }}">Repbook</a>
     <nav aria-label="Main navigation">
+      {% if g.user and g.user.role == "trainer" %}
       <a href="{{ url_for('clients.index') }}">Clients</a>
       <a href="{{ url_for('planning.index') }}">Workout plans</a>
+      {% endif %}
+      {% if g.user %}
+      <form class="logout-form" method="post" action="{{ url_for('auth.logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Log out</button>
+      </form>
+      {% else %}
+      <a href="{{ url_for('auth.login') }}">Log in</a>
+      <a href="{{ url_for('auth.register') }}">Register</a>
+      {% endif %}
     </nav>
   </header>
   <main>{% block content %}{% endblock %}</main>

@@ -14,8 +14,17 @@ CREATE TABLE IF NOT EXISTS workouts (
 
 INSERT OR IGNORE INTO clients (id, name) VALUES (1, 'Sample Client');
 
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('trainer', 'client'))
+);
+
 CREATE TABLE IF NOT EXISTS templates (
     id INTEGER PRIMARY KEY,
+    trainer_id INTEGER NOT NULL REFERENCES users(id),
     name TEXT NOT NULL
 );
 

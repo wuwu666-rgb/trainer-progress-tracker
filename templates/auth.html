@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-panel">
+<h1>{{ "Create an account" if registering else "Log in" }}</h1>
+{% if not registering and request.args.get("registered") %}
+<p>Account created. Log in to continue.</p>
+{% endif %}
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if registering %}
+  <label>Name <input name="name" value="{{ request.form.get('name', '') }}" autocomplete="name" required></label>
+  {% endif %}
+  <label>Email <input type="email" name="email" value="{{ request.form.get('email', '') }}" autocomplete="email" required></label>
+  <label>Password <input type="password" name="password" maxlength="256" autocomplete="{{ 'new-password' if registering else 'current-password' }}" required></label>
+  {% if registering %}
+  <label for="account-role">
+    Role
+    <select id="account-role" class="role-select" name="role" required>
+      <option value="">Select your role</option>
+      {% for role in ("trainer", "client") %}
+      <option value="{{ role }}"{% if request.form.get("role") == role %} selected{% endif %}>{{ role|capitalize }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
+  <button type="submit">{{ "Create account" if registering else "Log in" }}</button>
+</form>
+{% if registering %}
+<p>Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+{% else %}
+<p>New here? <a href="{{ url_for('auth.register') }}">Create an account</a></p>
+{% endif %}
+</div>
+{% endblock %}

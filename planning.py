@@ -1,5 +1,7 @@
 from flask import Blueprint, g, redirect, render_template, request, url_for
 
+from auth import check_csrf
+
 bp = Blueprint("planning", __name__)
 
 
@@ -10,6 +12,7 @@ def index():
     error = None
 
     if request.method == "POST":
+        check_csrf()
         name = request.form.get("name", "").strip()
         exercises = request.form.getlist("exercise")
         sets = request.form.getlist("target_sets")
@@ -31,7 +34,7 @@ def index():
         else:
             with g.db:
                 template_id = g.db.execute(
-                    "INSERT INTO templates (name) VALUES (?)", (name,)
+                    "INSERT INTO templates (name, trainer_id) VALUES (?, ?)", (name, g.user["id"])
                 ).lastrowid
                 g.db.executemany(
                     "INSERT INTO template_exercises "
@@ -44,7 +47,8 @@ def index():
     for exercise in g.db.execute(
         "SELECT t.id, t.name AS template_name, e.name, e.target_sets, e.target_reps "
         "FROM templates AS t JOIN template_exercises AS e ON e.template_id = t.id "
-        "ORDER BY t.id DESC, e.position"
+        "WHERE t.trainer_id = ? ORDER BY t.id DESC, e.position",
+        (g.user["id"],),
     ):
         template = templates.setdefault(exercise["id"], {"name": exercise["template_name"], "exercises": []})
         template["exercises"].append(exercise)
