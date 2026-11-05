@@ -8,7 +8,7 @@
 </head>
 <body>
   <header>
-    <a href="{{ url_for('home') }}">Repbook</a>
+    <a href="{{ url_for('home') }}" class="brand-wordmark">Repbook.</a>
     {% if not g.user %}
     <nav aria-label="Account navigation">
       <a href="{{ url_for('auth.login') }}">Log in</a>

@@ -59,7 +59,18 @@ def home():
     if g.user is None:
         return redirect(url_for("auth.login"))
     if g.user["role"] == "client":
-        return render_template("client_home.html", profile=get_linked_profile())
+        profile = get_linked_profile()
+        record_count = 0
+        if profile:
+            record_count = g.db.execute(
+                "SELECT (SELECT COUNT(*) FROM workouts WHERE client_id = ?) + "
+                "(SELECT COUNT(*) FROM cardio_workouts WHERE client_id = ?)",
+                (profile["id"], profile["id"]),
+            ).fetchone()[0]
+        return render_template(
+            "client_home.html", profile=profile, plans=get_assigned_plans(),
+            record_count=record_count,
+        )
     trainer_id = g.user["id"]
     overview = g.db.execute(
         "SELECT (SELECT COUNT(*) FROM clients WHERE trainer_id = ?) AS clients, "

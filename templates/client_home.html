@@ -1,24 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="workspace-page">
-  <div class="workspace-heading">
-    <h1>Client dashboard</h1>
-    <p>Welcome, {{ g.user.name }}.</p>
+<div class="client-overview">
+  <p class="overview-kicker">Trainer progress tracker</p>
+  <h1>Keep moving, {{ g.user.name }}.</h1>
+  <p class="overview-caption">Follow your plan and make every set count.</p>
+  <div class="overview-grid">
+    <section><p>Assigned workouts</p><strong>{{ plans|length }}</strong> plans</section>
+    <section><p>Training history</p><strong>{{ record_count }}</strong> records</section>
+    <section><p>Trainer connection</p><strong class="overview-connection">{{ profile.trainer_name if profile else 'Not linked' }}</strong></section>
   </div>
-  <section class="workspace-card">
-    {% if profile %}
+  <section class="overview-plans">
     <div class="workspace-card-heading">
-      <h2>{{ profile.trainer_name }}</h2>
-      <span class="workspace-status is-connected">Linked trainer</span>
+      <h2>Workout plans</h2>
+      <a href="{{ url_for('dashboard', page='workouts') }}">My workouts →</a>
     </div>
-    {% if profile.goals %}<p class="workspace-goals">Training goals: {{ profile.goals }}</p>{% endif %}
+    {% for plan in plans %}
+    <a class="workspace-card workspace-row-link" href="{{ url_for('planning.plan_detail', plan_id=plan.id) }}">{{ plan.name }} <span aria-hidden="true">›</span></a>
     {% else %}
-    <h2>Connect with your trainer</h2>
-    <p>Accept an invitation to see assigned workouts and training records.</p>
-    <div class="workspace-actions card-actions">
+    <div class="overview-empty">
+      <h3>No workout plans yet</h3>
+      {% if profile %}
+      <p>Your trainer’s assigned workouts will appear here.</p>
+      {% else %}
+      <p>Connect with a trainer to receive your first workout.</p>
       <a class="button" href="{{ url_for('clients.invitations') }}">Open invitations</a>
+      {% endif %}
     </div>
-    {% endif %}
+    {% endfor %}
   </section>
 </div>
 {% endblock %}

@@ -231,3 +231,23 @@ main :target { scroll-margin-top: 1rem; }
 .client-search + .workspace-list { margin-top: .75rem; }
 .client-pagination { margin-top: 1rem; }
 .workspace-list .workspace-card:target { border-color: #6532a5; }
+
+body { background: #f5f3ef; color: #222437; }
+header { border-bottom-color: #e5e0d8; }
+.brand-wordmark { color: #6250bb; font-size: 1.6rem; font-weight: 850; }
+.bottom-nav { border-top-color: #e5e0d8; }
+.bottom-nav a[aria-current="page"] { background: #eee9fb; color: #5946b1; }
+.client-overview { padding-top: clamp(.75rem, 4vw, 2rem); overflow-wrap: anywhere; }
+.overview-kicker { color: #625778; text-transform: uppercase; letter-spacing: .17em; font-size: .75rem; }
+.client-overview h1 { margin: .45rem 0; font-size: clamp(1.85rem, 5vw, 2.5rem); line-height: 1.15; }
+.overview-caption { color: #625b71; margin: 0 0 1.4rem; }
+.overview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; }
+.overview-grid section, .overview-plans { border-color: #e5e0d8; border-radius: 1rem; }
+.overview-grid section { margin: 0; min-width: 0; padding: clamp(.55rem, 2.5vw, 1.1rem); color: #625b71; }
+.overview-grid p { margin: 0 0 .65rem; font-size: .85rem; }
+.overview-grid strong { font-size: clamp(1.4rem, 5vw, 2.25rem); color: #222437; }
+.overview-grid .overview-connection { display: block; font-size: 1rem; }
+.overview-plans .workspace-row-link { margin-top: .65rem; }
+.overview-plans .workspace-card-heading { padding-bottom: .8rem; border-bottom: 1px solid #e5e0d8; }
+.overview-empty { text-align: center; padding: 1.4rem 0 .65rem; color: #625b71; }
+.overview-empty h3 { margin: 0; color: #222437; }
