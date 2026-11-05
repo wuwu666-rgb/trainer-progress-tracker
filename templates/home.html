@@ -1,17 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Trainer dashboard</h1>
-<p>Welcome, {{ g.user.name }}.</p>
-<div class="dashboard-cards">
-  <section>
-    <h2>Clients</h2>
-    <p>Open a client profile to record a workout or review training history.</p>
-    <a class="button" href="{{ url_for('clients.index') }}">Open client list</a>
-  </section>
-  <section>
-    <h2>Workout plans</h2>
-    <p>Create and review reusable workout templates.</p>
-    <a class="button" href="{{ url_for('planning.index') }}">Open workout plans</a>
-  </section>
+<div class="workspace-page">
+  <div class="workspace-heading">
+    <h1>Trainer dashboard</h1>
+    <p>Welcome, {{ g.user.name }}.</p>
+  </div>
+  <h2 class="workspace-section-title">Overview</h2>
+  <div class="workspace-list">
+    <section class="workspace-card">
+      <dl class="dashboard-overview">
+        <div><dt>Client profiles</dt><dd>{{ overview.clients }}</dd></div>
+        <div><dt>Pending invitations</dt><dd>{{ overview.invitations }}</dd></div>
+        <div><dt>Unassigned plans</dt><dd>{{ overview.plans }}</dd></div>
+      </dl>
+    </section>
+  </div>
 </div>
 {% endblock %}

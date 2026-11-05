@@ -1,22 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Client dashboard</h1>
-<p>Welcome, {{ g.user.name }}.</p>
-<div class="dashboard-cards">
-  <section>
-    <h2>Trainer invitations</h2>
-    <p>Review invitations and connect your account to your trainer.</p>
-    <a class="button" href="{{ url_for('clients.invitations') }}">Open invitations</a>
-  </section>
-  <section>
-    <h2>My workouts</h2>
-    <p>View the workouts your trainer has assigned to you.</p>
-    <a class="button" href="{{ url_for('dashboard', page='workouts') }}">Open workouts</a>
-  </section>
-  <section>
-    <h2>Progress</h2>
-    <p>Find the future home of your training history and body-weight records.</p>
-    <a class="button" href="{{ url_for('dashboard', page='progress') }}">Open progress</a>
+<div class="workspace-page">
+  <div class="workspace-heading">
+    <h1>Client dashboard</h1>
+    <p>Welcome, {{ g.user.name }}.</p>
+  </div>
+  <section class="workspace-card">
+    {% if profile %}
+    <div class="workspace-card-heading">
+      <h2>{{ profile.trainer_name }}</h2>
+      <span class="workspace-status is-connected">Linked trainer</span>
+    </div>
+    {% if profile.goals %}<p class="workspace-goals">Training goals: {{ profile.goals }}</p>{% endif %}
+    {% else %}
+    <h2>Connect with your trainer</h2>
+    <p>Accept an invitation to see assigned workouts and training records.</p>
+    <div class="workspace-actions card-actions">
+      <a class="button" href="{{ url_for('clients.invitations') }}">Open invitations</a>
+    </div>
+    {% endif %}
   </section>
 </div>
 {% endblock %}

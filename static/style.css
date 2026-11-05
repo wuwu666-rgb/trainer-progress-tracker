@@ -64,12 +64,15 @@ header .logout-form { display: inline; margin: 0; padding: 0; border: 0; backgro
 .template-form [data-move-exercise] { margin-top: .75rem; }
 .template-form [data-move-exercise]:disabled { opacity: .55; cursor: default; }
 
-.dashboard-cards {
+.dashboard-overview {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
-  gap: .85rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .5rem;
+  margin: 0;
+  text-align: center;
 }
-.dashboard-cards section { margin: 0; }
+.dashboard-overview dt { font-size: .875rem; color: #604e73; }
+.dashboard-overview dd { margin: .2rem 0 0; font-size: 1.5rem; font-weight: 650; }
 .with-bottom-nav { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
 .bottom-nav {
   position: fixed;

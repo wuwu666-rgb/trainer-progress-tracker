@@ -2,18 +2,11 @@
 {% block content %}
 <h1>{{ title }}</h1>
 <section>
-  {% if dashboard_page == "account" %}
   <h2>{{ g.user.name }}</h2>
   <p>{{ g.user.role|capitalize }} account</p>
   <form class="logout-form" method="post" action="{{ url_for('auth.logout') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit">Log out</button>
   </form>
-  {% else %}
-  <p>{{ message }}</p>
-  {% if dashboard_page == "progress" and profile %}
-  <a href="{{ url_for('history.index', client_id=profile.id) }}">View training history</a>
-  {% endif %}
-  {% endif %}
 </section>
 {% endblock %}

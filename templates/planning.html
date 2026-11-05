@@ -52,6 +52,7 @@
           <button type="submit">Create plan from template</button>
         </form>
         <a class="button workspace-secondary" href="{{ url_for('planning.index', template_id=template.id) }}">Edit template</a>
+        <a class="button workspace-secondary" href="{{ url_for('planning.delete_item', collection='templates', item_id=template.id) }}">Delete template</a>
       </div>
     </section>
     {% else %}

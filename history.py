@@ -5,10 +5,8 @@ from clients import get_visible_client
 bp = Blueprint("history", __name__)
 
 
-@bp.get("/clients/<int:client_id>/history")
-def index(client_id):
-    client = get_visible_client(client_id)
-    workouts = g.db.execute(
+def get_workouts(client_id):
+    return g.db.execute(
         "SELECT id, workout_date, exercise, reps, weight_lb, "
         "NULL AS duration_min, NULL AS distance_km FROM workouts WHERE client_id = ? "
         "UNION ALL "
@@ -17,4 +15,9 @@ def index(client_id):
         "ORDER BY workout_date DESC, id DESC",
         (client_id, client_id),
     ).fetchall()
-    return render_template("history.html", client=client, workouts=workouts)
+
+
+@bp.get("/clients/<int:client_id>/history")
+def index(client_id):
+    client = get_visible_client(client_id)
+    return render_template("history.html", client=client, workouts=get_workouts(client_id))

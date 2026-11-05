@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+{% if dashboard_page != "progress" %}
 <div class="workspace-actions workspace-back">
   {% if g.user.role == "trainer" %}
   <a class="button workspace-secondary" href="{{ url_for('clients.index', focus=client.id, q=request.args.get('q') or none, _anchor='client-' ~ client.id) }}">← Back to clients</a>
@@ -7,8 +8,17 @@
   <a class="button workspace-secondary" href="{{ url_for('dashboard', page='progress') }}">← Back to progress</a>
   {% endif %}
 </div>
-<h1>Training history</h1>
+{% endif %}
+<h1>{{ 'Progress' if dashboard_page == 'progress' else 'Training history' }}</h1>
+{% if client %}
 <p>{{ client.name }}</p>
+{% if dashboard_page == "progress" %}
+<h2>Training history</h2>
+{% endif %}
+{% else %}
+<p>Connect to your trainer to see your saved training records.</p>
+<p><a class="button" href="{{ url_for('clients.invitations') }}">Trainer invitations</a></p>
+{% endif %}
 {% if g.user.role == "trainer" %}
 <a class="button" href="{{ url_for('sessions.record', client_id=client.id, q=request.args.get('q') or none) }}">Record another workout</a>
 {% endif %}
@@ -22,6 +32,6 @@
   {% endif %}
 </section>
 {% else %}
-<p>No training records yet.</p>
+{% if client %}<p>No training records yet.</p>{% endif %}
 {% endfor %}
 {% endblock %}
