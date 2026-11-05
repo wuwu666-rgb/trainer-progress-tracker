@@ -79,7 +79,47 @@ def index(template_id=None):
         template = templates.setdefault(exercise["id"], {"id": exercise["id"], "name": exercise["template_name"], "exercises": []})
         template["exercises"].append(exercise)
 
+    plans = g.db.execute(
+        "SELECT id, name FROM plans WHERE trainer_id = ? ORDER BY id DESC",
+        (g.user["id"],),
+    ).fetchall()
     return render_template(
-        "planning.html", templates=templates.values(), name=name, rows=rows,
+        "planning.html", plans=plans, templates=templates.values(), name=name, rows=rows,
         error=error, editing=template_id is not None,
     ), 400 if error else 200
+
+
+@bp.post("/planning/templates/<int:template_id>/copy")
+def copy_template(template_id):
+    check_csrf()
+    with g.db:
+        result = g.db.execute(
+            "INSERT INTO plans (trainer_id, source_template_id, name) "
+            "SELECT trainer_id, id, name FROM templates WHERE id = ? AND trainer_id = ?",
+            (template_id, g.user["id"]),
+        )
+        if not result.rowcount:
+            abort(404)
+        plan_id = result.lastrowid
+        g.db.execute(
+            "INSERT INTO plan_exercises (plan_id, position, name, target_sets, target_reps) "
+            "SELECT ?, position, name, target_sets, target_reps "
+            "FROM template_exercises WHERE template_id = ?",
+            (plan_id, template_id),
+        )
+    return redirect(url_for("planning.plan_detail", plan_id=plan_id))
+
+
+@bp.get("/planning/plans/<int:plan_id>")
+def plan_detail(plan_id):
+    plan = g.db.execute(
+        "SELECT name FROM plans WHERE id = ? AND trainer_id = ?", (plan_id, g.user["id"])
+    ).fetchone()
+    if plan is None:
+        abort(404)
+    exercises = g.db.execute(
+        "SELECT name, target_sets, target_reps FROM plan_exercises "
+        "WHERE plan_id = ? ORDER BY position",
+        (plan_id,),
+    ).fetchall()
+    return render_template("plan_detail.html", plan=plan, exercises=exercises)
