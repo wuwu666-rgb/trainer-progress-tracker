@@ -21,3 +21,18 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('trainer', 'client'))
 );
+
+CREATE TABLE IF NOT EXISTS templates (
+    id INTEGER PRIMARY KEY,
+    trainer_id INTEGER NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS template_exercises (
+    template_id INTEGER NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    target_sets INTEGER NOT NULL CHECK (target_sets > 0),
+    target_reps INTEGER NOT NULL CHECK (target_reps > 0),
+    PRIMARY KEY (template_id, position)
+);

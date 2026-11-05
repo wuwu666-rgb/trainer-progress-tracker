@@ -61,6 +61,11 @@ def init_database(*, seed_demo=False):
         db.executescript(Path(__file__).with_name("schema.sql").read_text(encoding="utf-8"))
 
 
+        # Older local templates have no known owner.
+        columns = db.execute("PRAGMA table_info(templates)").fetchall()
+        if not any(column[1] == "trainer_id" for column in columns):
+            db.execute("ALTER TABLE templates ADD COLUMN trainer_id INTEGER REFERENCES users(id)")
+
         if seed_demo:
             for name, email, password, role in (
                 ("Demo Trainer", "demo-trainer-84d617@example.com", "JsL_iMYZv-B1aFeo", "trainer"),
