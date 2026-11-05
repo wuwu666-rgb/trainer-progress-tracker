@@ -1,3 +1,4 @@
+from contextlib import closing
 from pathlib import Path
 import os
 import secrets
@@ -9,8 +10,8 @@ from werkzeug.security import generate_password_hash
 
 from auth import bp as auth, csrf_token, load_user
 
-from clients import bp as clients
-from planning import bp as planning
+from clients import bp as clients, get_linked_profile
+from planning import bp as planning, get_assigned_plans
 from sessions import bp as sessions
 from history import bp as history
 
@@ -36,7 +37,13 @@ def open_database():
     if request.blueprint in ("clients", "planning", "sessions", "history"):
         if g.user is None:
             return redirect(url_for("auth.login"))
-        if g.user["role"] != "trainer":
+        if request.endpoint in ("clients.invitations", "clients.respond"):
+            if g.user["role"] != "client":
+                abort(403)
+        elif g.user["role"] != "trainer" and not (
+            request.blueprint == "history"
+            or (request.endpoint == "planning.plan_detail" and request.method in ("GET", "HEAD"))
+        ):
             abort(403)
 
 
@@ -56,10 +63,53 @@ def home():
     return render_template("home.html")
 
 
-def init_database(*, seed_demo=False):
-    with sqlite3.connect(app.config["DATABASE"]) as db:
-        db.executescript(Path(__file__).with_name("schema.sql").read_text(encoding="utf-8"))
+@app.get("/dashboard/<page>")
+def dashboard(page):
+    if g.user is None:
+        return redirect(url_for("auth.login"))
 
+    if page == "account":
+        return render_template("dashboard_page.html", title="Account", dashboard_page=page)
+
+    client_pages = {
+        "progress": ("Progress", "Review your training history once your account is linked to a trainer."),
+    }
+    if g.user["role"] != "client":
+        abort(404)
+    if page == "workouts":
+        return render_template("assigned_plans.html", dashboard_page=page, plans=get_assigned_plans())
+    if page not in client_pages:
+        abort(404)
+    title, message = client_pages[page]
+    return render_template(
+        "dashboard_page.html", title=title, dashboard_page=page, message=message,
+        profile=get_linked_profile(),
+    )
+
+
+def init_database(*, seed_demo=False):
+    with closing(sqlite3.connect(app.config["DATABASE"])) as db, db:
+        db.execute("PRAGMA foreign_keys = ON")
+        db.executescript(Path(__file__).with_name("schema.sql").read_text(encoding="utf-8"))
+        db.execute("BEGIN IMMEDIATE")
+
+        client_columns = {column[1] for column in db.execute("PRAGMA table_info(clients)")}
+        if "goals" not in client_columns:
+            db.execute("ALTER TABLE clients ADD COLUMN goals TEXT NOT NULL DEFAULT ''")
+        if "trainer_id" not in client_columns:
+            db.execute("ALTER TABLE clients ADD COLUMN trainer_id INTEGER REFERENCES users(id)")
+
+        db.execute("CREATE INDEX IF NOT EXISTS clients_trainer_name ON clients (trainer_id, name)")
+        if "client_user_id" not in client_columns:
+            db.execute("ALTER TABLE clients ADD COLUMN client_user_id INTEGER REFERENCES users(id)")
+        db.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS clients_linked_account "
+            "ON clients (client_user_id) WHERE client_user_id IS NOT NULL"
+        )
+
+        plan_columns = {column[1] for column in db.execute("PRAGMA table_info(plans)")}
+        if "profile_id" not in plan_columns:
+            db.execute("ALTER TABLE plans ADD COLUMN profile_id INTEGER REFERENCES clients(id)")
 
         # Older local templates have no known owner.
         columns = db.execute("PRAGMA table_info(templates)").fetchall()
@@ -78,6 +128,15 @@ def init_database(*, seed_demo=False):
                     "ON CONFLICT(email) DO NOTHING",
                     (name, email, generate_password_hash(password), role),
                 )
+
+
+            db.execute(
+                "INSERT INTO clients (name, trainer_id) "
+                "SELECT 'Sample Client', id FROM users "
+                "WHERE email = ? AND role = 'trainer' "
+                "AND NOT EXISTS (SELECT 1 FROM clients WHERE trainer_id = users.id)",
+                ("demo-trainer-84d617@example.com",),
+            )
 
 
 if __name__ == "__main__":

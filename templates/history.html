@@ -1,12 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="workspace-actions workspace-back">
+  {% if g.user.role == "trainer" %}
+  <a class="button workspace-secondary" href="{{ url_for('clients.index', focus=client.id, q=request.args.get('q') or none, _anchor='client-' ~ client.id) }}">← Back to clients</a>
+  {% else %}
+  <a class="button workspace-secondary" href="{{ url_for('dashboard', page='progress') }}">← Back to progress</a>
+  {% endif %}
+</div>
 <h1>Training history</h1>
 <p>{{ client.name }}</p>
-<a class="button" href="{{ url_for('sessions.record', client_id=client.id) }}">Record another set</a>
+{% if g.user.role == "trainer" %}
+<a class="button" href="{{ url_for('sessions.record', client_id=client.id, q=request.args.get('q') or none) }}">Record another workout</a>
+{% endif %}
 {% for workout in workouts %}
 <section>
   <h2>{{ workout.exercise }}</h2>
+  {% if workout.duration_min is not none %}
+  <p>{{ workout.workout_date }} · Cardio · {{ workout.duration_min }} min{% if workout.distance_km is not none %} · {{ workout.distance_km }} km{% endif %}</p>
+  {% else %}
   <p>{{ workout.workout_date }} · {{ workout.reps }} reps · {{ workout.weight_lb }} lb</p>
+  {% endif %}
 </section>
 {% else %}
 <p>No training records yet.</p>

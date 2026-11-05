@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="workspace-page workspace-form-page">
+<div class="workspace-heading"><h1>Edit client profile</h1></div>
+{% include "client_form.html" %}
+<div class="workspace-actions">
+  <a class="button workspace-secondary" href="{{ url_for('clients.index', focus=profile.id, q=request.args.get('q') or none, _anchor='client-' ~ profile.id) }}">Back to clients</a>
+  <a class="button workspace-secondary" href="{{ url_for('clients.delete', client_id=profile.id) }}">Delete profile</a>
+</div>
+</div>
+{% endblock %}

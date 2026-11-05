@@ -1,13 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Clients</h1>
-{% for client in clients %}
-<section>
-  <h2>{{ client.name }}</h2>
-  <a class="button" href="{{ url_for('sessions.record', client_id=client.id) }}">Record training</a>
-  <a href="{{ url_for('history.index', client_id=client.id) }}">View history</a>
-</section>
-{% else %}
-<p>No clients yet.</p>
-{% endfor %}
+<div class="workspace-page">
+  <div class="workspace-heading">
+    <h1>Clients</h1>
+    <p>Manage client profiles and keep track of their training.</p>
+    <div class="workspace-actions">
+      <a class="button" href="{{ url_for('clients.manage_invitations') }}">Invitations</a>
+      <a class="button workspace-secondary" href="{{ url_for('clients.new_client') }}">Add client profile</a>
+    </div>
+  </div>
+
+  <h2 class="workspace-section-title" id="client-list">Your clients</h2>
+  <form class="client-search" method="get" action="{{ url_for('clients.index', _anchor='client-list') }}" role="search">
+    <label for="client-search">Search by client name</label>
+    <div class="client-search-controls">
+      <input id="client-search" type="search" name="q" value="{{ query }}" maxlength="100" placeholder="e.g. Alex" enterkeyhint="search">
+      <button type="submit">Search</button>
+    </div>
+    {% if query %}
+    <a class="button workspace-secondary" href="{{ url_for('clients.index', _anchor='client-list') }}">Clear search</a>
+    {% endif %}
+  </form>
+  {% if clients %}
+  <p class="client-result-count">Showing {{ first }}–{{ last }} of {{ total }} {{ 'matches' if query else 'clients' }}</p>
+  {% endif %}
+  <div class="workspace-list">
+    {% for client in clients %}
+    <section class="workspace-card" id="client-{{ client.id }}">
+      <div class="workspace-card-heading">
+        <h3>{{ client.name }}</h3>
+        <span class="workspace-status{% if client.client_user_id %} is-connected{% endif %}">{{ "Connected" if client.client_user_id else "Not connected" }}</span>
+      </div>
+      {% if client.goals %}<p class="workspace-goals">{{ client.goals }}</p>{% endif %}
+      <div class="workspace-actions card-actions">
+        <a class="button" href="{{ url_for('sessions.record', client_id=client.id, q=query or none) }}">Record training</a>
+        <a class="button workspace-secondary" href="{{ url_for('history.index', client_id=client.id, q=query or none) }}">View history</a>
+        <a class="button workspace-secondary" href="{{ url_for('clients.edit', client_id=client.id, q=query or none) }}">Edit profile</a>
+      </div>
+    </section>
+    {% else %}
+    <p class="workspace-empty">
+      {{ 'No clients match your search.' if query else 'No clients yet. Send an invitation or add a client profile to get started.' }}
+    </p>
+    {% endfor %}
+  </div>
+  {% if pages > 1 %}
+  <nav class="workspace-actions client-pagination" aria-label="Client pages">
+    {% if page > 1 %}
+    <a class="button workspace-secondary" href="{{ url_for('clients.index', page=page-1, q=query or none, _anchor='client-list') }}" rel="prev">Previous</a>
+    {% endif %}
+    <span>Page {{ page }} of {{ pages }}</span>
+    {% if page < pages %}
+    <a class="button workspace-secondary" href="{{ url_for('clients.index', page=page+1, q=query or none, _anchor='client-list') }}" rel="next">Next</a>
+    {% endif %}
+  </nav>
+  {% endif %}
+</div>
 {% endblock %}

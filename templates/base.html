@@ -2,29 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}Repbook{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header>
     <a href="{{ url_for('home') }}">Repbook</a>
-    <nav aria-label="Main navigation">
-      {% if g.user and g.user.role == "trainer" %}
-      <a href="{{ url_for('clients.index') }}">Clients</a>
-      <a href="{{ url_for('planning.index') }}">Workout plans</a>
-      {% endif %}
-      {% if g.user %}
-      <form class="logout-form" method="post" action="{{ url_for('auth.logout') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit">Log out</button>
-      </form>
-      {% else %}
+    {% if not g.user %}
+    <nav aria-label="Account navigation">
       <a href="{{ url_for('auth.login') }}">Log in</a>
       <a href="{{ url_for('auth.register') }}">Register</a>
-      {% endif %}
     </nav>
+    {% endif %}
   </header>
-  <main>{% block content %}{% endblock %}</main>
+  <main{% if g.user %} class="with-bottom-nav"{% endif %}>{% block content %}{% endblock %}</main>
+{% if g.user %}
+{% macro tab(label, endpoint, active, page=None) %}
+  <a href="{{ url_for(endpoint, page=page) if page else url_for(endpoint) }}"{% if active %} aria-current="page"{% endif %}>{{ label }}</a>
+{% endmacro %}
+<nav class="bottom-nav" aria-label="Main navigation">
+  <div class="bottom-nav-links">
+    {{ tab('Home', 'home', request.endpoint == 'home') }}
+    {% if g.user.role == 'trainer' %}
+    {{ tab('Clients', 'clients.index', request.blueprint in ('clients', 'sessions', 'history')) }}
+    {{ tab('Plans', 'planning.index', request.blueprint == 'planning') }}
+    {% else %}
+    {{ tab('Workouts', 'dashboard', dashboard_page == 'workouts' or request.endpoint == 'planning.plan_detail', 'workouts') }}
+    {{ tab('Progress', 'dashboard', dashboard_page == 'progress' or request.blueprint == 'history', 'progress') }}
+    {% endif %}
+    {{ tab('Account', 'dashboard', dashboard_page == 'account', 'account') }}
+  </div>
+</nav>
+{% endif %}
 </body>
 </html>
