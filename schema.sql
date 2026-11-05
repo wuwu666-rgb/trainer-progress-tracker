@@ -36,3 +36,19 @@ CREATE TABLE IF NOT EXISTS template_exercises (
     target_reps INTEGER NOT NULL CHECK (target_reps > 0),
     PRIMARY KEY (template_id, position)
 );
+
+CREATE TABLE IF NOT EXISTS plans (
+    id INTEGER PRIMARY KEY,
+    trainer_id INTEGER NOT NULL REFERENCES users(id),
+    source_template_id INTEGER REFERENCES templates(id) ON DELETE SET NULL,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS plan_exercises (
+    plan_id INTEGER NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    target_sets INTEGER NOT NULL CHECK (target_sets > 0),
+    target_reps INTEGER NOT NULL CHECK (target_reps > 0),
+    PRIMARY KEY (plan_id, position)
+);

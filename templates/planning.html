@@ -43,9 +43,23 @@
     {% endfor %}
   </ol>
   <a href="{{ url_for('planning.index', template_id=template.id) }}">Edit template</a>
+  <form method="post" action="{{ url_for('planning.copy_template', template_id=template.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Create plan from template</button>
+  </form>
 </section>
 {% else %}
 <p>No workout templates yet.</p>
 {% endfor %}
+<h2>Saved workout plans</h2>
+{% if plans %}
+<ul>
+  {% for plan in plans %}
+  <li><a href="{{ url_for('planning.plan_detail', plan_id=plan.id) }}">{{ plan.name }}</a></li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No workout plans yet.</p>
+{% endif %}
 <script src="{{ url_for('static', filename='planning.js') }}" defer></script>
 {% endblock %}

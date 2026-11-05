@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ url_for('planning.index') }}">Back to workout plans</a></p>
+<h1>{{ plan.name }}</h1>
+<p class="badge">Unassigned workout plan</p>
+<section class="saved-template">
+  <h2>Planned exercises</h2>
+  <ol>
+    {% for exercise in exercises %}
+    <li>{{ exercise.name }} · {{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps</li>
+    {% endfor %}
+  </ol>
+</section>
+{% endblock %}
