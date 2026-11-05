@@ -21,3 +21,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, .role-select:focus-v
   outline-offset: 3px;
 }
 header .logout-form { display: inline; margin: 0; padding: 0; border: 0; background: none; }
+
+.auth-panel {
+  max-width: 28rem;
+  margin-inline: auto;
+  padding-block: clamp(1rem, 6vh, 3.5rem);
+  text-align: center;
+}
+.auth-panel h1 { margin-top: 0; }
+.auth-panel form { text-align: start; }
