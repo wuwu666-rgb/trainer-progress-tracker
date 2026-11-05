@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="workspace-page workspace-form-page">
+  <div class="workspace-heading">
+    <h1>{{ 'Delete template' if is_template else 'Delete workout plan' }}</h1>
+    <p>{{ item.name }}</p>
+  </div>
+  {% if can_delete %}
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if is_template %}
+    <p>This permanently deletes the template. Plans already created from it will stay available.</p>
+    {% else %}
+    <p>This permanently deletes this unassigned plan.</p>
+    {% endif %}
+    <button type="submit">Confirm deletion</button>
+  </form>
+  {% else %}
+  <p role="alert">This item is no longer available to delete. Assigned workout plans are kept for clients.</p>
+  {% endif %}
+  <div class="workspace-actions">
+    <a class="button workspace-secondary" href="{{ url_for('planning.index') if is_template else url_for('planning.plan_detail', plan_id=item_id) }}">{{ 'Cancel' if can_delete else 'Back' }}</a>
+  </div>
+</div>
+{% endblock %}

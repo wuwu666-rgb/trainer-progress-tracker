@@ -4,9 +4,11 @@
   <div class="workspace-heading">
     <h1>My workouts</h1>
     <p>Open a plan to see the exercises and targets from your trainer.</p>
+    {% if not profile %}
     <div class="workspace-actions">
       <a class="button workspace-secondary" href="{{ url_for('clients.invitations') }}">Trainer invitations</a>
     </div>
+    {% endif %}
   </div>
   <div class="workspace-list">
     {% for plan in plans %}
@@ -18,5 +20,6 @@
     <p class="workspace-empty">No workouts have been assigned to you yet.</p>
     {% endfor %}
   </div>
+  {% if profile %}<p class="client-result-count">Completed training records appear under Progress.</p>{% endif %}
 </div>
 {% endblock %}

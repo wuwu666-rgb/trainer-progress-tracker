@@ -182,7 +182,7 @@ def plan_detail(plan_id):
     trainer = g.user["role"] == "trainer"
     access = "p.trainer_id" if trainer else "c.client_user_id"
     plan = g.db.execute(
-        "SELECT p.name, p.profile_id, c.name AS client_name FROM plans AS p "
+        "SELECT p.id, p.name, p.profile_id, c.name AS client_name FROM plans AS p "
         "LEFT JOIN clients AS c ON c.id = p.profile_id AND c.trainer_id = p.trainer_id "
         f"WHERE p.id = ? AND {access} = ?",
         (plan_id, g.user["id"]),
@@ -225,4 +225,37 @@ def plan_detail(plan_id):
     return render_template(
         "plan_detail.html", plan=plan, exercises=exercises, error=error,
         clients=linked_clients() if trainer and plan["profile_id"] is None else (),
+    ), status
+
+@bp.route("/planning/<collection>/<int:item_id>/delete", methods=["GET", "POST"])
+def delete_item(collection, item_id):
+    if collection not in ("templates", "plans"):
+        abort(404)
+
+    is_template = collection == "templates"
+    owner = (item_id, g.user["id"])
+    columns = "name" if is_template else "name, profile_id"
+    item = g.db.execute(
+        f"SELECT {columns} FROM {collection} WHERE id = ? AND trainer_id = ?", owner
+    ).fetchone()
+    if item is None:
+        abort(404)
+
+    can_delete = is_template or item["profile_id"] is None
+    status = 200
+    if request.method == "POST":
+        check_csrf()
+        condition = "" if is_template else " AND profile_id IS NULL"
+        with g.db:
+            result = g.db.execute(
+                f"DELETE FROM {collection} WHERE id = ? AND trainer_id = ?{condition}", owner
+            )
+        if result.rowcount:
+            return redirect(url_for("planning.index", _anchor=None if is_template else "saved-plans"))
+        can_delete = False
+        status = 409
+
+    return render_template(
+        "planning_delete.html", item=item, item_id=item_id, is_template=is_template,
+        can_delete=can_delete,
     ), status

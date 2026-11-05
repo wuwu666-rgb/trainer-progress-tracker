@@ -13,7 +13,7 @@ from auth import bp as auth, csrf_token, load_user
 from clients import bp as clients, get_linked_profile
 from planning import bp as planning, get_assigned_plans
 from sessions import bp as sessions
-from history import bp as history
+from history import bp as history, get_workouts
 
 app = Flask(__name__)
 app.config["DATABASE"] = Path(__file__).with_name("trainer.sqlite3")
@@ -59,8 +59,16 @@ def home():
     if g.user is None:
         return redirect(url_for("auth.login"))
     if g.user["role"] == "client":
-        return render_template("client_home.html")
-    return render_template("home.html")
+        return render_template("client_home.html", profile=get_linked_profile())
+    trainer_id = g.user["id"]
+    overview = g.db.execute(
+        "SELECT (SELECT COUNT(*) FROM clients WHERE trainer_id = ?) AS clients, "
+        "(SELECT COUNT(*) FROM client_invitations AS i JOIN clients AS c ON c.id = i.client_id "
+        "WHERE c.trainer_id = ? AND i.status = 'pending') AS invitations, "
+        "(SELECT COUNT(*) FROM plans WHERE trainer_id = ? AND profile_id IS NULL) AS plans",
+        (trainer_id, trainer_id, trainer_id),
+    ).fetchone()
+    return render_template("home.html", overview=overview)
 
 
 @app.get("/dashboard/<page>")
@@ -71,20 +79,20 @@ def dashboard(page):
     if page == "account":
         return render_template("dashboard_page.html", title="Account", dashboard_page=page)
 
-    client_pages = {
-        "progress": ("Progress", "Review your training history once your account is linked to a trainer."),
-    }
     if g.user["role"] != "client":
         abort(404)
     if page == "workouts":
-        return render_template("assigned_plans.html", dashboard_page=page, plans=get_assigned_plans())
-    if page not in client_pages:
-        abort(404)
-    title, message = client_pages[page]
-    return render_template(
-        "dashboard_page.html", title=title, dashboard_page=page, message=message,
-        profile=get_linked_profile(),
-    )
+        return render_template(
+            "assigned_plans.html", dashboard_page=page, plans=get_assigned_plans(),
+            profile=get_linked_profile(),
+        )
+    if page == "progress":
+        profile = get_linked_profile()
+        return render_template(
+            "history.html", dashboard_page=page, client=profile,
+            workouts=get_workouts(profile["id"]) if profile else (),
+        )
+    abort(404)
 
 
 def init_database(*, seed_demo=False):

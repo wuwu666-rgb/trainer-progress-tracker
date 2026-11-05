@@ -14,10 +14,6 @@
       </div>
       <p>Client profile: {{ profile.name }}</p>
       {% if profile.goals %}<p>Training goals: {{ profile.goals }}</p>{% endif %}
-      <div class="workspace-actions card-actions">
-        <a class="button" href="{{ url_for('dashboard', page='workouts') }}">My workouts</a>
-        <a class="button workspace-secondary" href="{{ url_for('history.index', client_id=profile.id) }}">View training history</a>
-      </div>
     </section>
     {% endif %}
     {% for invitation in invitations %}

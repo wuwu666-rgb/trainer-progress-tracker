@@ -5,6 +5,11 @@
 </div>
 <h1>Record training</h1>
 <p>{{ client.name }}</p>
+{% if client.client_user_id %}
+<p>After you save, this record will appear in the client's Progress.</p>
+{% else %}
+<p>This profile is not connected. The client can see saved records after accepting an invitation for this profile.</p>
+{% endif %}
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
 <form method="post" class="record-form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
