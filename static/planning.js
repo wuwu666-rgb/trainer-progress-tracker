@@ -1,24 +1,43 @@
 const exerciseList = document.querySelector("#exercise-list");
 const exerciseFields = document.querySelector("#exercise-fields");
 
-function updateRemoveButtons() {
+function updateExerciseButtons() {
   const buttons = exerciseList.querySelectorAll("[data-remove-exercise]");
   for (const button of buttons) {
     button.hidden = buttons.length === 1;
+  }
+  for (const card of exerciseList.children) {
+    const up = card.querySelector('[data-move-exercise="up"]');
+    const down = card.querySelector('[data-move-exercise="down"]');
+    if (up && down) {
+      up.disabled = !card.previousElementSibling;
+      down.disabled = !card.nextElementSibling;
+    }
   }
 }
 
 document.querySelector("#add-exercise").addEventListener("click", () => {
   exerciseList.append(exerciseFields.content.cloneNode(true));
-  updateRemoveButtons();
+  updateExerciseButtons();
   exerciseList.lastElementChild.querySelector("input").focus();
 });
 
 exerciseList.addEventListener("click", (event) => {
-  if (event.target.matches("[data-remove-exercise]") && exerciseList.children.length > 1) {
-    event.target.closest("fieldset").remove();
-    updateRemoveButtons();
+  const button = event.target.closest("button");
+  if (!button) return;
+
+  const card = button.closest("fieldset");
+  if (button.matches("[data-remove-exercise]") && exerciseList.children.length > 1) {
+    card.remove();
+  } else if (button.dataset.moveExercise === "up" && card.previousElementSibling) {
+    card.previousElementSibling.before(card);
+  } else if (button.dataset.moveExercise === "down" && card.nextElementSibling) {
+    card.nextElementSibling.after(card);
+  }
+  updateExerciseButtons();
+  if (button.dataset.moveExercise) {
+    (button.disabled ? card.querySelector("input") : button).focus();
   }
 });
 
-updateRemoveButtons();
+updateExerciseButtons();

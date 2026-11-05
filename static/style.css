@@ -60,3 +60,6 @@ header .logout-form { display: inline; margin: 0; padding: 0; border: 0; backgro
   .template-form { padding: .75rem; }
   .template-form .exercise-card { padding: .6rem; }
 }
+
+.template-form [data-move-exercise] { margin-top: .75rem; }
+.template-form [data-move-exercise]:disabled { opacity: .55; cursor: default; }
