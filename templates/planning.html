@@ -7,13 +7,17 @@
     <label>Sets <input type="number" name="target_sets" inputmode="numeric" min="1" step="1" value="{{ sets }}" required></label>
     <label>Reps per set <input type="number" name="target_reps" inputmode="numeric" min="1" step="1" value="{{ reps }}" required></label>
   </div>
+  {% if editing %}
+  <button type="button" data-move-exercise="up">Move up</button>
+  <button type="button" data-move-exercise="down">Move down</button>
+  {% endif %}
   <button type="button" data-remove-exercise>Remove exercise</button>
 </fieldset>
 {% endmacro %}
 {% block content %}
 <h1>Workout plans</h1>
 
-<h2>Create a workout template</h2>
+<h2>{{ "Edit workout template" if editing else "Create a workout template" }}</h2>
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
 <form method="post" class="template-form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -24,7 +28,8 @@
     {% endfor %}
   </div>
   <button type="button" id="add-exercise">Add exercise</button>
-  <button type="submit">Save template</button>
+  <button type="submit">{{ "Save changes" if editing else "Save template" }}</button>
+  {% if editing %}<a href="{{ url_for('planning.index') }}">Cancel editing</a>{% endif %}
 </form>
 <template id="exercise-fields">{{ exercise_fields() }}</template>
 
@@ -37,6 +42,7 @@
       <li>{{ exercise.name }} · {{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps</li>
     {% endfor %}
   </ol>
+  <a href="{{ url_for('planning.index', template_id=template.id) }}">Edit template</a>
 </section>
 {% else %}
 <p>No workout templates yet.</p>
