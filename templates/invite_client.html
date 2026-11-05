@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="workspace-page workspace-form-page">
+<div class="workspace-heading"><h1>Client invitations</h1></div>
+<p><a href="{{ url_for('clients.index') }}">Back to clients</a></p>
+<p>Invite a client using their registered email. They can respond from their Invitations page.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+<form method="post" action="{{ url_for('clients.manage_invitations') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Client email <input type="email" name="email" required value="{{ request.form.get('email', '') }}"></label>
+  <label>Client profile
+    <select name="profile_id" class="role-select">
+      <option value="">Create a new profile from this account</option>
+      {% for profile in profiles %}
+      <option value="{{ profile.id }}"{% if selected_profile == profile.id|string %} selected{% endif %}>{{ profile.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit">Send invitation</button>
+</form>
+<h2>Invitation history</h2>
+{% for invitation in invitations %}
+<section>
+  <h3>{{ invitation.profile_name }}</h3>
+  <p>{{ invitation.email }} · {{ invitation.status|capitalize }}</p>
+</section>
+{% else %}
+<p>No invitations sent yet.</p>
+{% endfor %}
+</div>
+{% endblock %}

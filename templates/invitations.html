@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="workspace-page">
+  <div class="workspace-heading">
+    <h1>Invitations</h1>
+    <p>Connect your account to your trainer to see your workouts and history.</p>
+  </div>
+  <div class="workspace-list">
+    {% if profile %}
+    <section class="workspace-card">
+      <div class="workspace-card-heading">
+        <h2>{{ profile.trainer_name }}</h2>
+        <span class="workspace-status is-connected">Linked trainer</span>
+      </div>
+      <p>Client profile: {{ profile.name }}</p>
+      {% if profile.goals %}<p>Training goals: {{ profile.goals }}</p>{% endif %}
+      <div class="workspace-actions card-actions">
+        <a class="button" href="{{ url_for('dashboard', page='workouts') }}">My workouts</a>
+        <a class="button workspace-secondary" href="{{ url_for('history.index', client_id=profile.id) }}">View training history</a>
+      </div>
+    </section>
+    {% endif %}
+    {% for invitation in invitations %}
+    <section class="workspace-card">
+      <div class="workspace-card-heading">
+        <h2>{{ invitation.trainer_name }}</h2>
+        <span class="workspace-status">Pending</span>
+      </div>
+      <p>Client profile: {{ invitation.profile_name }}</p>
+      <form class="workspace-actions card-actions inline-action" method="post" action="{{ url_for('clients.respond', invitation_id=invitation.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button name="decision" value="accept">Accept invitation</button>
+        <button class="workspace-secondary" name="decision" value="decline">Decline invitation</button>
+      </form>
+    </section>
+    {% else %}
+    {% if not profile %}<p class="workspace-empty">No pending invitations.</p>{% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

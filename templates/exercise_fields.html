@@ -1,0 +1,17 @@
+{% macro exercise_fields(exercise='', sets='', reps='') %}
+<fieldset class="exercise-card">
+  <legend>Exercise</legend>
+  <label>Exercise name <input name="exercise" value="{{ exercise }}" required></label>
+  <div class="exercise-targets">
+    <label>Sets <input type="number" name="target_sets" inputmode="numeric" min="1" step="1" value="{{ sets }}" required></label>
+    <label>Reps per set <input type="number" name="target_reps" inputmode="numeric" min="1" step="1" value="{{ reps }}" required></label>
+  </div>
+  <div class="exercise-actions">
+  {% if reorder %}
+  <button type="button" data-move-exercise="up">Move up</button>
+  <button type="button" data-move-exercise="down">Move down</button>
+  {% endif %}
+  <button type="button" data-remove-exercise>Remove exercise</button>
+  </div>
+</fieldset>
+{% endmacro %}

@@ -1,13 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="workspace-actions workspace-back">
+  <a class="button workspace-secondary" href="{{ url_for('clients.index', focus=client.id, q=request.args.get('q') or none, _anchor='client-' ~ client.id) }}">← Back to clients</a>
+</div>
 <h1>Record training</h1>
-<p>{{ client.name }} · One set per demo record</p>
+<p>{{ client.name }}</p>
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
-<form method="post">
+<form method="post" class="record-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label>Date <input type="date" name="workout_date" required max="{{ today }}" value="{{ request.form.get('workout_date', today) }}"></label>
   <label>Exercise <input name="exercise" required value="{{ request.form.get('exercise', '') }}"></label>
-  <label>Reps <input type="number" name="reps" required min="1" value="{{ request.form.get('reps', '') }}"></label>
-  <label>Weight (lb) <input type="number" name="weight_lb" required min="0" step="any" value="{{ request.form.get('weight_lb', '') }}"></label>
-  <button>Save set</button>
+  <label>Exercise type
+    <select id="exercise-type" class="role-select" name="exercise_type">
+      <option value="strength"{% if exercise_type != 'cardio' %} selected{% endif %}>Strength</option>
+      <option value="cardio"{% if exercise_type == 'cardio' %} selected{% endif %}>Cardio</option>
+    </select>
+  </label>
+  <fieldset data-exercise-fields="strength"{% if exercise_type == 'cardio' %} hidden disabled{% endif %}>
+    <legend>Strength</legend>
+    <label>Reps <input type="number" name="reps" required min="1" value="{{ request.form.get('reps', '') }}"></label>
+    <label>Weight (lb) <input type="number" name="weight_lb" required min="0" step="any" value="{{ request.form.get('weight_lb', '') }}"></label>
+  </fieldset>
+  <fieldset data-exercise-fields="cardio"{% if exercise_type != 'cardio' %} hidden disabled{% endif %}>
+    <legend>Cardio</legend>
+    <label>Duration (minutes) <input type="number" name="duration_min" required min="0" step="any" inputmode="decimal" value="{{ request.form.get('duration_min', '') }}"></label>
+    <label>Distance (km, optional) <input type="number" name="distance_km" min="0" step="any" inputmode="decimal" value="{{ request.form.get('distance_km', '') }}"></label>
+  </fieldset>
+  <button type="submit">Save training</button>
 </form>
+<script src="{{ url_for('static', filename='record.js') }}" defer></script>
 {% endblock %}

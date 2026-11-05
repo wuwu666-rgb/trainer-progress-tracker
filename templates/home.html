@@ -1,7 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
-<p class="badge">Local prototype</p>
 <h1>Trainer dashboard</h1>
-<p>Choose a sample client to record a set and review training history.</p>
-<a class="button" href="{{ url_for('clients.index') }}">Open client list</a>
+<p>Welcome, {{ g.user.name }}.</p>
+<div class="dashboard-cards">
+  <section>
+    <h2>Clients</h2>
+    <p>Open a client profile to record a workout or review training history.</p>
+    <a class="button" href="{{ url_for('clients.index') }}">Open client list</a>
+  </section>
+  <section>
+    <h2>Workout plans</h2>
+    <p>Create and review reusable workout templates.</p>
+    <a class="button" href="{{ url_for('planning.index') }}">Open workout plans</a>
+  </section>
+</div>
 {% endblock %}

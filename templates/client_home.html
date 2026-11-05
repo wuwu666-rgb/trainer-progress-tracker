@@ -2,5 +2,21 @@
 {% block content %}
 <h1>Client dashboard</h1>
 <p>Welcome, {{ g.user.name }}.</p>
-<p>Your assigned workouts will appear here when your trainer connects your account.</p>
+<div class="dashboard-cards">
+  <section>
+    <h2>Trainer invitations</h2>
+    <p>Review invitations and connect your account to your trainer.</p>
+    <a class="button" href="{{ url_for('clients.invitations') }}">Open invitations</a>
+  </section>
+  <section>
+    <h2>My workouts</h2>
+    <p>View the workouts your trainer has assigned to you.</p>
+    <a class="button" href="{{ url_for('dashboard', page='workouts') }}">Open workouts</a>
+  </section>
+  <section>
+    <h2>Progress</h2>
+    <p>Find the future home of your training history and body-weight records.</p>
+    <a class="button" href="{{ url_for('dashboard', page='progress') }}">Open progress</a>
+  </section>
+</div>
 {% endblock %}

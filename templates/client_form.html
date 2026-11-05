@@ -1,0 +1,9 @@
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Client name <input name="name" value="{{ request.form.get('name', profile.name if profile else '') }}" required></label>
+  <label>Training goals (optional)
+    <textarea name="goals" rows="3">{{ request.form.get('goals', profile.goals if profile else '') }}</textarea>
+  </label>
+  <button type="submit">{{ 'Save changes' if profile else 'Add client' }}</button>
+</form>

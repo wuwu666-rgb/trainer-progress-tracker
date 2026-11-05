@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="workspace-page workspace-form-page">
+<div class="workspace-heading"><h1>Add client profile</h1></div>
+<p>Create a profile for tracking training before the client connects an account.</p>
+{% include "client_form.html" %}
+<a href="{{ url_for('clients.index') }}">Back to clients</a>
+</div>
+{% endblock %}

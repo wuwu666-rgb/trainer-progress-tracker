@@ -1,65 +1,76 @@
 {% extends "base.html" %}
-{% macro exercise_fields(exercise='', sets='', reps='') %}
-<fieldset class="exercise-card">
-  <legend>Exercise</legend>
-  <label>Exercise name <input name="exercise" value="{{ exercise }}" required></label>
-  <div class="exercise-targets">
-    <label>Sets <input type="number" name="target_sets" inputmode="numeric" min="1" step="1" value="{{ sets }}" required></label>
-    <label>Reps per set <input type="number" name="target_reps" inputmode="numeric" min="1" step="1" value="{{ reps }}" required></label>
-  </div>
-  {% if editing %}
-  <button type="button" data-move-exercise="up">Move up</button>
-  <button type="button" data-move-exercise="down">Move down</button>
-  {% endif %}
-  <button type="button" data-remove-exercise>Remove exercise</button>
-</fieldset>
-{% endmacro %}
 {% block content %}
-<h1>Workout plans</h1>
+{% set reorder = editing %}
+{% from "exercise_fields.html" import exercise_fields with context %}
+<div class="workspace-page">
+  <div class="workspace-heading">
+    <h1>Workout plans</h1>
+    <p>Reuse a training template or build a one-time plan for a client.</p>
+    {% if not editing %}
+    <div class="workspace-actions">
+      <a class="button" href="{{ url_for('planning.new_plan') }}">Create plan from scratch</a>
+      <a class="button workspace-secondary" href="#saved-plans">Saved plans</a>
+    </div>
+    {% endif %}
+  </div>
 
-<h2>{{ "Edit workout template" if editing else "Create a workout template" }}</h2>
-{% if error %}<p role="alert">{{ error }}</p>{% endif %}
-<form method="post" class="template-form">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <label>Template name <input name="name" value="{{ name }}" required></label>
-  <div id="exercise-list">
-    {% for exercise, sets, reps in rows %}
-      {{ exercise_fields(exercise, sets, reps) }}
+  <details class="template-editor"{% if editing or error %} open{% endif %}>
+    <summary>{{ "Edit workout template" if editing else "Create a workout template" }}</summary>
+    {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+    <form method="post" class="template-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Template name <input name="name" value="{{ name }}" required></label>
+      <div id="exercise-list">
+        {% for exercise, sets, reps in rows %}
+        {{ exercise_fields(exercise, sets, reps) }}
+        {% endfor %}
+      </div>
+      <button type="button" id="add-exercise">Add exercise</button>
+      <button type="submit">{{ "Save changes" if editing else "Save template" }}</button>
+      {% if editing %}<a href="{{ url_for('planning.index') }}">Cancel editing</a>{% endif %}
+    </form>
+  </details>
+  <template id="exercise-fields">{{ exercise_fields() }}</template>
+
+  {% if not editing %}
+  <h2 class="workspace-section-title">Saved templates</h2>
+  <div class="workspace-list">
+    {% for template in templates %}
+    <section class="workspace-card">
+      <div class="workspace-card-heading">
+        <h3>{{ template.name }}</h3>
+        <span class="workspace-status">Reusable template</span>
+      </div>
+      <ol class="workspace-exercises">
+        {% for exercise in template.exercises %}
+        <li>{{ exercise.name }} · {{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps</li>
+        {% endfor %}
+      </ol>
+      <div class="workspace-actions card-actions">
+        <form class="inline-action" method="post" action="{{ url_for('planning.copy_template', template_id=template.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit">Create plan from template</button>
+        </form>
+        <a class="button workspace-secondary" href="{{ url_for('planning.index', template_id=template.id) }}">Edit template</a>
+      </div>
+    </section>
+    {% else %}
+    <p class="workspace-empty">No templates yet. Create one to reuse a set of exercises.</p>
     {% endfor %}
   </div>
-  <button type="button" id="add-exercise">Add exercise</button>
-  <button type="submit">{{ "Save changes" if editing else "Save template" }}</button>
-  {% if editing %}<a href="{{ url_for('planning.index') }}">Cancel editing</a>{% endif %}
-</form>
-<template id="exercise-fields">{{ exercise_fields() }}</template>
 
-<h2>Saved templates</h2>
-{% for template in templates %}
-<section class="saved-template">
-  <h3>{{ template.name }}</h3>
-  <ol>
-    {% for exercise in template.exercises %}
-      <li>{{ exercise.name }} · {{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps</li>
+  <h2 class="workspace-section-title" id="saved-plans">Saved workout plans</h2>
+  <div class="workspace-list">
+    {% for plan in plans %}
+    <section class="workspace-card workspace-card-heading">
+      <h3><a href="{{ url_for('planning.plan_detail', plan_id=plan.id) }}">{{ plan.name }}</a></h3>
+      <span class="workspace-status{% if plan.client_name %} is-connected{% endif %}">{{ 'Assigned to ' ~ plan.client_name if plan.client_name else 'Unassigned' }}</span>
+    </section>
+    {% else %}
+    <p class="workspace-empty">No workout plans yet. Start from a template or create a plan from scratch.</p>
     {% endfor %}
-  </ol>
-  <a href="{{ url_for('planning.index', template_id=template.id) }}">Edit template</a>
-  <form method="post" action="{{ url_for('planning.copy_template', template_id=template.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Create plan from template</button>
-  </form>
-</section>
-{% else %}
-<p>No workout templates yet.</p>
-{% endfor %}
-<h2>Saved workout plans</h2>
-{% if plans %}
-<ul>
-  {% for plan in plans %}
-  <li><a href="{{ url_for('planning.plan_detail', plan_id=plan.id) }}">{{ plan.name }}</a></li>
-  {% endfor %}
-</ul>
-{% else %}
-<p>No workout plans yet.</p>
-{% endif %}
+  </div>
+  {% endif %}
+</div>
 <script src="{{ url_for('static', filename='planning.js') }}" defer></script>
 {% endblock %}

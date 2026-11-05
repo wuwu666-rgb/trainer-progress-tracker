@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "exercise_fields.html" import exercise_fields with context %}
+{% block content %}
+<div class="workspace-page workspace-form-page">
+<p><a href="{{ url_for('planning.index') }}">Back to workout plans</a></p>
+<div class="workspace-heading"><h1>Create a workout plan from scratch</h1></div>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if clients %}
+<form method="post" class="template-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% include "client_picker.html" %}
+  <label>Plan name <input name="name" value="{{ name }}" required></label>
+  <div id="exercise-list">
+    {% for exercise, sets, reps in rows %}
+    {{ exercise_fields(exercise, sets, reps) }}
+    {% endfor %}
+  </div>
+  <button type="button" id="add-exercise">Add exercise</button>
+  <button type="submit">Save and assign plan</button>
+</form>
+<template id="exercise-fields">{{ exercise_fields() }}</template>
+<script src="{{ url_for('static', filename='planning.js') }}" defer></script>
+{% else %}
+<p>Connect a client account before creating a custom workout plan.</p>
+<a href="{{ url_for('clients.index') }}">Go to clients</a>
+{% endif %}
+</div>
+{% endblock %}

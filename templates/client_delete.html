@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="workspace-page workspace-form-page">
+  <div class="workspace-heading">
+    <h1>Delete client profile</h1>
+    <p>{{ profile.name }}</p>
+  </div>
+  {% if can_delete %}
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <p>This will permanently delete this empty profile.</p>
+    <button type="submit">Delete profile</button>
+  </form>
+  {% else %}
+  <p role="alert">This profile has a linked account, an invitation, a workout plan, or training history. You can still edit its details.</p>
+  {% endif %}
+  <div class="workspace-actions">
+    <a class="button workspace-secondary" href="{{ url_for('clients.edit', client_id=profile.id) }}">{{ 'Cancel' if can_delete else 'Back to edit profile' }}</a>
+  </div>
+</div>
+{% endblock %}
