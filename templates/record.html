@@ -1,37 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="workspace-actions workspace-back">
-  <a class="button workspace-secondary" href="{{ url_for('clients.index', focus=client.id, q=request.args.get('q') or none, _anchor='client-' ~ client.id) }}">← Back to clients</a>
+<div class="workspace-page">
+  <div class="record-heading">
+    <a class="button workspace-secondary record-back" href="{{ url_for('clients.index', focus=client.id, q=request.args.get('q') or none, _anchor='client-' ~ client.id) }}" aria-label="Back to clients" title="Back to clients">←</a>
+    <div>
+      <h1>Record training</h1>
+      <p>{{ client.name }}</p>
+    </div>
+  </div>
+
+  {% if not client.client_user_id %}
+  <p>This client can see saved records after connecting their account.</p>
+  {% endif %}
+  {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+
+  <form method="post" class="record-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Exercise
+      <input name="exercise" required value="{{ request.form.get('exercise', '') }}">
+    </label>
+    <div class="record-result-fields">
+      <label><span id="record-result-label">{{ 'Duration per set' if timed else 'Reps per set' }}</span>
+        <input id="record-result" type="number" name="result" required min="{{ 0 if timed else 1 }}" step="{{ 'any' if timed else '1' }}" inputmode="{{ 'decimal' if timed else 'numeric' }}" value="{{ result }}">
+      </label>
+      <div>
+        <label for="result-unit">Unit</label>
+        <select id="result-unit" class="role-select" name="result_unit">
+          <option value="reps"{% if not timed %} selected{% endif %}>Reps</option>
+          <option value="minutes"{% if timed %} selected{% endif %}>Minutes</option>
+        </select>
+      </div>
+    </div>
+    <label>Sets
+      <input type="number" name="set_count" min="1" step="1" inputmode="numeric" value="{{ request.form.get('set_count', '1') }}" required>
+    </label>
+    {% set weight = request.form.get('weight_lb', '') %}
+    {% set distance = request.form.get('distance_km', '') %}
+    {% set record_date = request.form.get('workout_date', today) %}
+    <details class="record-extra"{% if (distance if timed else weight) or record_date != today %} open{% endif %}>
+      <summary>More details <span id="record-date-summary">{{ 'Today' if record_date == today else record_date or 'Choose a date' }}</span></summary>
+      <label{% if timed %} hidden{% endif %}>Added weight (lb)
+        <input id="record-weight" type="number" name="weight_lb" min="0" step="any" inputmode="decimal" value="{{ weight }}"{% if timed %} disabled{% endif %}>
+      </label>
+      <label{% if not timed %} hidden{% endif %}>Total distance (km)
+        <input id="record-distance" type="number" name="distance_km" min="0" step="any" inputmode="decimal" value="{{ distance }}"{% if not timed %} disabled{% endif %}>
+      </label>
+      <label>Date
+        <input id="record-date" type="date" name="workout_date" required max="{{ today }}" value="{{ record_date }}">
+      </label>
+    </details>
+    <button type="submit">Save training</button>
+  </form>
 </div>
-<h1>Record training</h1>
-<p>{{ client.name }}</p>
-{% if client.client_user_id %}
-<p>After you save, this record will appear in the client's Progress.</p>
-{% else %}
-<p>This profile is not connected. The client can see saved records after accepting an invitation for this profile.</p>
-{% endif %}
-{% if error %}<p role="alert">{{ error }}</p>{% endif %}
-<form method="post" class="record-form">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <label>Date <input type="date" name="workout_date" required max="{{ today }}" value="{{ request.form.get('workout_date', today) }}"></label>
-  <label>Exercise <input name="exercise" required value="{{ request.form.get('exercise', '') }}"></label>
-  <label>Exercise type
-    <select id="exercise-type" class="role-select" name="exercise_type">
-      <option value="strength"{% if exercise_type != 'cardio' %} selected{% endif %}>Strength</option>
-      <option value="cardio"{% if exercise_type == 'cardio' %} selected{% endif %}>Cardio</option>
-    </select>
-  </label>
-  <fieldset data-exercise-fields="strength"{% if exercise_type == 'cardio' %} hidden disabled{% endif %}>
-    <legend>Strength</legend>
-    <label>Reps <input type="number" name="reps" required min="1" value="{{ request.form.get('reps', '') }}"></label>
-    <label>Added weight (lb, optional) <input type="number" name="weight_lb" min="0" step="any" inputmode="decimal" value="{{ request.form.get('weight_lb', '') }}"></label>
-  </fieldset>
-  <fieldset data-exercise-fields="cardio"{% if exercise_type != 'cardio' %} hidden disabled{% endif %}>
-    <legend>Cardio</legend>
-    <label>Duration (minutes) <input type="number" name="duration_min" required min="0" step="any" inputmode="decimal" value="{{ request.form.get('duration_min', '') }}"></label>
-    <label>Distance (km, optional) <input type="number" name="distance_km" min="0" step="any" inputmode="decimal" value="{{ request.form.get('distance_km', '') }}"></label>
-  </fieldset>
-  <button type="submit">Save training</button>
-</form>
 <script src="{{ url_for('static', filename='record.js') }}" defer></script>
 {% endblock %}

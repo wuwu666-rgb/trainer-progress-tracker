@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS workouts (
     workout_date TEXT NOT NULL,
     exercise TEXT NOT NULL,
     reps INTEGER NOT NULL CHECK (reps > 0),
-    weight_lb TEXT NOT NULL
+    weight_lb TEXT NOT NULL,
+    set_count INTEGER NOT NULL DEFAULT 1 CHECK (set_count > 0)
 );
 
 CREATE TABLE IF NOT EXISTS client_invitations (
@@ -54,7 +55,8 @@ CREATE TABLE IF NOT EXISTS cardio_workouts (
     workout_date TEXT NOT NULL,
     exercise TEXT NOT NULL,
     duration_min TEXT NOT NULL,
-    distance_km TEXT
+    distance_km TEXT,
+    set_count INTEGER NOT NULL DEFAULT 1 CHECK (set_count > 0)
 );
 
 CREATE TABLE IF NOT EXISTS plans (

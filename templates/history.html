@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "workout_summary.html" import workout_summary %}
 {% block content %}
 {% if dashboard_page != "progress" %}
 <div class="workspace-actions workspace-back">
@@ -25,10 +26,11 @@
 {% for workout in workouts %}
 <section>
   <h2>{{ workout.exercise }}</h2>
-  {% if workout.duration_min is not none %}
-  <p>{{ workout.workout_date }} · Cardio · {{ workout.duration_min }} min{% if workout.distance_km is not none %} · {{ workout.distance_km }} km{% endif %}</p>
-  {% else %}
-  <p>{{ workout.workout_date }} · {{ workout.reps }} reps{% if not workout.no_added_weight %} · {{ workout.weight_lb }} lb added{% endif %}</p>
+  {{ workout_summary(workout) }}
+  {% if g.user.role == "trainer" %}
+  <div class="workspace-actions card-actions">
+    <a class="button workspace-secondary" href="{{ url_for('history.delete_record', client_id=client.id, kind='strength' if workout.duration_min is none else 'timed', record_id=workout.id, q=request.args.get('q') or none) }}">Delete record</a>
+  </div>
   {% endif %}
 </section>
 {% else %}
