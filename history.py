@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from flask import Blueprint, g, render_template
 
 from clients import get_visible_client
@@ -6,7 +8,7 @@ bp = Blueprint("history", __name__)
 
 
 def get_workouts(client_id):
-    return g.db.execute(
+    rows = g.db.execute(
         "SELECT id, workout_date, exercise, reps, weight_lb, "
         "NULL AS duration_min, NULL AS distance_km FROM workouts WHERE client_id = ? "
         "UNION ALL "
@@ -15,6 +17,10 @@ def get_workouts(client_id):
         "ORDER BY workout_date DESC, id DESC",
         (client_id, client_id),
     ).fetchall()
+    return [
+        dict(row, no_added_weight=row["weight_lb"] is not None and Decimal(row["weight_lb"]).is_zero())
+        for row in rows
+    ]
 
 
 @bp.get("/clients/<int:client_id>/history")

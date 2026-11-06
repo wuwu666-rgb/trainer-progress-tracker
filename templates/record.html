@@ -24,7 +24,7 @@
   <fieldset data-exercise-fields="strength"{% if exercise_type == 'cardio' %} hidden disabled{% endif %}>
     <legend>Strength</legend>
     <label>Reps <input type="number" name="reps" required min="1" value="{{ request.form.get('reps', '') }}"></label>
-    <label>Weight (lb) <input type="number" name="weight_lb" required min="0" step="any" value="{{ request.form.get('weight_lb', '') }}"></label>
+    <label>Added weight (lb, optional) <input type="number" name="weight_lb" min="0" step="any" inputmode="decimal" value="{{ request.form.get('weight_lb', '') }}"></label>
   </fieldset>
   <fieldset data-exercise-fields="cardio"{% if exercise_type != 'cardio' %} hidden disabled{% endif %}>
     <legend>Cardio</legend>

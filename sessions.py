@@ -45,7 +45,7 @@ def record(client_id):
                         )
                 elif exercise_type == "strength":
                     reps = int(request.form.get("reps", ""))
-                    weight = Decimal(request.form.get("weight_lb", ""))
+                    weight = Decimal(request.form.get("weight_lb", "").strip() or "0")
                     if not 0 < reps < 2**63 or not weight.is_finite() or weight < 0:
                         raise ValueError
                     with g.db:
@@ -59,7 +59,7 @@ def record(client_id):
             except (ValueError, InvalidOperation):
                 error = {
                     "cardio": "Enter a positive duration and, if provided, a nonnegative distance.",
-                    "strength": "Enter positive whole-number reps and a nonnegative weight.",
+                    "strength": "Enter positive whole-number reps. Added weight is optional and must be zero or greater.",
                 }.get(exercise_type, "Choose Strength or Cardio.")
             else:
                 return redirect(url_for(
