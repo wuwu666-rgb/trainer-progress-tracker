@@ -13,7 +13,16 @@ bp = Blueprint("sessions", __name__)
 def record(client_id):
     client = get_visible_client(client_id)
     today = date.today()
-    exercise_type = request.form.get("exercise_type", "strength")
+    result_unit = request.form.get("result_unit")
+    if result_unit is not None:
+        exercise_type = {"reps": "strength", "minutes": "cardio"}.get(result_unit)
+    elif request.method == "POST":
+        exercise_type = request.form.get("exercise_type", "strength")
+    else:
+        exercise_type = "cardio" if request.args.get("mode") == "cardio" else "strength"
+    timed = exercise_type == "cardio"
+    legacy_field = "duration_min" if timed else "reps"
+    result = request.form.get("result", request.form.get(legacy_field, ""))
     error = None
 
     if request.method == "POST":
@@ -30,7 +39,7 @@ def record(client_id):
             values = (client_id, workout_date.isoformat(), exercise)
             try:
                 if exercise_type == "cardio":
-                    duration = Decimal(request.form.get("duration_min", ""))
+                    duration = Decimal(result)
                     distance_text = request.form.get("distance_km", "").strip()
                     distance = Decimal(distance_text) if distance_text else None
                     if (not duration.is_finite() or duration <= 0
@@ -43,10 +52,13 @@ def record(client_id):
                             "VALUES (?, ?, ?, ?, ?)",
                             (*values, str(duration), str(distance) if distance is not None else None),
                         )
-                elif exercise_type == "strength":
-                    reps = int(request.form.get("reps", ""))
-                    weight = Decimal(request.form.get("weight_lb", "").strip() or "0")
-                    if not 0 < reps < 2**63 or not weight.is_finite() or weight < 0:
+                elif exercise_type in ("bodyweight", "weighted", "strength"):
+                    reps = int(result)
+                    weight_text = request.form.get("weight_lb", "").strip()
+                    weight = Decimal((weight_text or "0") if exercise_type != "bodyweight" else "0")
+                    if (not 0 < reps < 2**63
+                            or not weight.is_finite() or weight < 0
+                            or (exercise_type == "weighted" and weight.is_zero())):
                         raise ValueError
                     with g.db:
                         g.db.execute(
@@ -59,14 +71,16 @@ def record(client_id):
             except (ValueError, InvalidOperation):
                 error = {
                     "cardio": "Enter a positive duration and, if provided, a nonnegative distance.",
+                    "bodyweight": "Enter positive whole-number reps.",
+                    "weighted": "Enter positive whole-number reps and an added weight greater than zero.",
                     "strength": "Enter positive whole-number reps. Added weight is optional and must be zero or greater.",
-                }.get(exercise_type, "Choose Strength or Cardio.")
+                }.get(exercise_type, "Choose reps or minutes.")
             else:
                 return redirect(url_for(
-                "history.index", client_id=client_id, q=request.args.get("q") or None,
-            ))
+                    "history.index", client_id=client_id, q=request.args.get("q") or None,
+                ))
 
     return render_template(
         "record.html", client=client, today=today.isoformat(), error=error,
-        exercise_type=exercise_type,
+        timed=timed, result=result,
     )
