@@ -100,8 +100,6 @@ header .logout-form { display: inline; margin: 0; padding: 0; border: 0; backgro
 }
 .bottom-nav a:hover, .bottom-nav a[aria-current="page"] { background: #eee3fc; }
 
-.record-form fieldset { min-width: 0; margin: 0; border: 1px solid #ddccef; border-radius: .5rem; }
-.record-form fieldset:not([hidden]) { display: grid; gap: .75rem; }
 
 .workspace-page {
   max-width: 42rem;
@@ -251,3 +249,16 @@ header { border-bottom-color: #e5e0d8; }
 .overview-plans .workspace-card-heading { padding-bottom: .8rem; border-bottom: 1px solid #e5e0d8; }
 .overview-empty { text-align: center; padding: 1.4rem 0 .65rem; color: #625b71; }
 .overview-empty h3 { margin: 0; color: #222437; }
+
+.record-heading { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: .65rem; margin-top: 1rem; }
+.record-back { display: grid; place-items: center; width: 44px; min-height: 44px; padding: 0; }
+.record-heading h1 { margin: 0; font-size: clamp(1.5rem, 5vw, 2rem); }
+.record-heading p { margin: .25rem 0 0; color: #625b71; }
+.record-form { width: 100%; max-width: none; }
+.record-form input { min-width: 0; }
+
+.record-result-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(6.5rem, 32%); gap: .65rem; }
+.record-extra summary { min-height: 44px; align-content: center; cursor: pointer; color: #625b71; }
+.record-extra summary span { margin-inline-start: .4rem; font-size: .875rem; }
+.record-extra > label { display: block; margin-top: .55rem; }
+.record-extra > label[hidden] { display: none; }

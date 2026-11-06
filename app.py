@@ -126,6 +126,13 @@ def init_database(*, seed_demo=False):
             "ON clients (client_user_id) WHERE client_user_id IS NOT NULL"
         )
 
+        for table in ("workouts", "cardio_workouts"):
+            columns = {column[1] for column in db.execute(f"PRAGMA table_info({table})")}
+            if "set_count" not in columns:
+                db.execute(
+                    f"ALTER TABLE {table} ADD COLUMN set_count INTEGER NOT NULL DEFAULT 1 CHECK (set_count > 0)"
+                )
+
         plan_columns = {column[1] for column in db.execute("PRAGMA table_info(plans)")}
         if "profile_id" not in plan_columns:
             db.execute("ALTER TABLE plans ADD COLUMN profile_id INTEGER REFERENCES clients(id)")
