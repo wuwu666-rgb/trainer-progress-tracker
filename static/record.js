@@ -9,7 +9,7 @@ const distance = document.querySelector("#record-distance");
 
 unit.addEventListener("change", () => {
   const timed = unit.value === "minutes";
-  resultLabel.textContent = timed ? "Duration" : "Reps";
+  resultLabel.textContent = timed ? "Duration per set" : "Reps per set";
   result.min = timed ? "0" : "1";
   result.step = timed ? "any" : "1";
   result.inputMode = timed ? "decimal" : "numeric";

@@ -20,7 +20,7 @@
       <input name="exercise" required value="{{ request.form.get('exercise', '') }}">
     </label>
     <div class="record-result-fields">
-      <label><span id="record-result-label">{{ 'Duration' if timed else 'Reps' }}</span>
+      <label><span id="record-result-label">{{ 'Duration per set' if timed else 'Reps per set' }}</span>
         <input id="record-result" type="number" name="result" required min="{{ 0 if timed else 1 }}" step="{{ 'any' if timed else '1' }}" inputmode="{{ 'decimal' if timed else 'numeric' }}" value="{{ result }}">
       </label>
       <div>
@@ -31,6 +31,9 @@
         </select>
       </div>
     </div>
+    <label>Sets
+      <input type="number" name="set_count" min="1" step="1" inputmode="numeric" value="{{ request.form.get('set_count', '1') }}" required>
+    </label>
     {% set weight = request.form.get('weight_lb', '') %}
     {% set distance = request.form.get('distance_km', '') %}
     {% set record_date = request.form.get('workout_date', today) %}
@@ -39,7 +42,7 @@
       <label{% if timed %} hidden{% endif %}>Added weight (lb)
         <input id="record-weight" type="number" name="weight_lb" min="0" step="any" inputmode="decimal" value="{{ weight }}"{% if timed %} disabled{% endif %}>
       </label>
-      <label{% if not timed %} hidden{% endif %}>Distance (km)
+      <label{% if not timed %} hidden{% endif %}>Total distance (km)
         <input id="record-distance" type="number" name="distance_km" min="0" step="any" inputmode="decimal" value="{{ distance }}"{% if not timed %} disabled{% endif %}>
       </label>
       <label>Date
