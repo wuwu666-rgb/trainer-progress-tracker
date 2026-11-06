@@ -36,6 +36,13 @@ def record(client_id):
             error = "Enter an exercise and a valid date that is not in the future."
 
         if error is None:
+            set_count = request.form.get("set_count", default=None, type=int)
+            if "set_count" not in request.form:
+                set_count = 1
+            if set_count is None or not 0 < set_count < 2**63:
+                error = "Enter a positive whole number of sets."
+
+        if error is None:
             values = (client_id, workout_date.isoformat(), exercise)
             try:
                 if exercise_type == "cardio":
@@ -48,9 +55,9 @@ def record(client_id):
                     with g.db:
                         g.db.execute(
                             "INSERT INTO cardio_workouts "
-                            "(client_id, workout_date, exercise, duration_min, distance_km) "
-                            "VALUES (?, ?, ?, ?, ?)",
-                            (*values, str(duration), str(distance) if distance is not None else None),
+                            "(client_id, workout_date, exercise, duration_min, distance_km, set_count) "
+                            "VALUES (?, ?, ?, ?, ?, ?)",
+                            (*values, str(duration), str(distance) if distance is not None else None, set_count),
                         )
                 elif exercise_type in ("bodyweight", "weighted", "strength"):
                     reps = int(result)
@@ -62,9 +69,9 @@ def record(client_id):
                         raise ValueError
                     with g.db:
                         g.db.execute(
-                            "INSERT INTO workouts (client_id, workout_date, exercise, reps, weight_lb) "
-                            "VALUES (?, ?, ?, ?, ?)",
-                            (*values, reps, str(weight)),
+                            "INSERT INTO workouts (client_id, workout_date, exercise, reps, weight_lb, set_count) "
+                            "VALUES (?, ?, ?, ?, ?, ?)",
+                            (*values, reps, str(weight), set_count),
                         )
                 else:
                     raise ValueError
@@ -73,7 +80,7 @@ def record(client_id):
                     "cardio": "Enter a positive duration and, if provided, a nonnegative distance.",
                     "bodyweight": "Enter positive whole-number reps.",
                     "weighted": "Enter positive whole-number reps and an added weight greater than zero.",
-                    "strength": "Enter positive whole-number reps. Added weight is optional and must be zero or greater.",
+                    "strength": "Enter positive whole-number reps per set. Added weight is optional and must be zero or greater.",
                 }.get(exercise_type, "Choose reps or minutes.")
             else:
                 return redirect(url_for(
