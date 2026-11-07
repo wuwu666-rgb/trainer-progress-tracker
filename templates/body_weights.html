@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="workspace-page">
+  <a class="button workspace-secondary" href="{{ url_for('history.index', client_id=client.id) if g.user.role == 'trainer' else url_for('dashboard', page='progress') }}">← Back to history</a>
+  <div class="workspace-heading">
+    <h1>Body-weight history</h1>
+    <p>{{ client.name }}</p>
+    {% if g.user.role == 'trainer' %}
+    <a class="button" href="{{ url_for('history.edit_body_weight', client_id=client.id) }}">Record body weight</a>
+    {% endif %}
+  </div>
+  <div class="workspace-list">
+    {% for entry in entries %}
+    <section class="workspace-card workspace-card-heading">
+      <h2>{{ entry.weight_lb }} lb</h2>
+      <time datetime="{{ entry.measurement_date }}">{{ entry.measurement_date }}</time>
+      {% if g.user.role == 'trainer' %}
+      <a class="button workspace-secondary" href="{{ url_for('history.edit_body_weight', client_id=client.id, entry_id=entry.id) }}">Edit measurement</a>
+      {% endif %}
+    </section>
+    {% else %}
+    <p class="workspace-empty">No body-weight measurements yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

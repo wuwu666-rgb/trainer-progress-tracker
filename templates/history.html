@@ -13,6 +13,7 @@
 <h1>{{ 'Progress' if dashboard_page == 'progress' else 'Training history' }}</h1>
 {% if client %}
 <p>{{ client.name }}</p>
+<p><a class="button workspace-secondary" href="{{ url_for('history.body_weights', client_id=client.id) }}">Body-weight history</a></p>
 {% if dashboard_page == "progress" %}
 <h2>Training history</h2>
 {% endif %}
