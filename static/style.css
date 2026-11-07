@@ -54,6 +54,11 @@ header .logout-form { display: inline; margin: 0; padding: 0; border: 0; backgro
 }
 .template-form [data-remove-exercise] { margin-top: .75rem; }
 .template-form [hidden] { display: none; }
+.plan-exercise { min-width: 0; overflow-wrap: anywhere; border: 1px solid #ddccef; border-radius: .6rem; background: #fbf8ff; }
+.plan-exercise > summary { min-height: 44px; align-content: center; padding: .55rem .75rem; cursor: pointer; }
+.plan-exercise .exercise-metrics { margin-inline-start: .3rem; }
+.template-form .plan-exercise > .exercise-card { border: 0; background: transparent; }
+.plan-exercise legend { display: none; }
 .saved-template { overflow-wrap: anywhere; }
 
 @media (max-width: 480px) {

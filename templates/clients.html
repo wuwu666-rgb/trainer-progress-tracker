@@ -35,6 +35,9 @@
       <div class="workspace-actions card-actions">
         <a class="button" href="{{ url_for('sessions.record', client_id=client.id, q=query or none) }}">Record training</a>
         <a class="button workspace-secondary" href="{{ url_for('history.index', client_id=client.id, q=query or none) }}">View history</a>
+        {% if client.client_user_id %}
+        <a class="button workspace-secondary" href="{{ url_for('planning.plan_for_client', client_id=client.id, q=query or none) }}">Plan workout</a>
+        {% endif %}
         <a class="button workspace-secondary" href="{{ url_for('clients.edit', client_id=client.id, q=query or none) }}">Edit profile</a>
       </div>
     </section>

@@ -21,6 +21,7 @@
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
 {% if g.user.role == "trainer" and plan.profile_id is none %}
 <div class="workspace-actions">
+  <a class="button workspace-secondary" href="{{ url_for('planning.edit_plan', plan_id=plan.id) }}">Edit plan</a>
   <a class="button workspace-secondary" href="{{ url_for('planning.delete_item', collection='plans', item_id=plan.id) }}">Delete plan</a>
 </div>
 <h2>Assign to client</h2>
