@@ -4,8 +4,13 @@ from itertools import zip_longest
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
 from auth import check_csrf
+from clients import get_visible_client
 
 bp = Blueprint("planning", __name__)
+PLAN_VALIDATION_ERROR = (
+    "Enter a plan name and at least one named exercise. Sets and reps must be positive whole "
+    "numbers. Target weight, if provided, must be zero or greater."
+)
 
 
 def read_workout_fields():
@@ -44,6 +49,21 @@ def linked_clients():
         "ORDER BY name, id",
         (g.user["id"],),
     ).fetchall()
+
+
+def owned_templates():
+    return g.db.execute(
+        "SELECT id, name FROM templates WHERE trainer_id = ? ORDER BY name, id",
+        (g.user["id"],),
+    ).fetchall()
+
+
+def write_plan_exercises(plan_id, targets):
+    g.db.executemany(
+        "INSERT INTO plan_exercises (plan_id, position, name, target_sets, target_reps, target_weight_lb) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        ((plan_id, position, *target) for position, target in enumerate(targets, 1)),
+    )
 
 
 @bp.route("/planning", methods=["GET", "POST"])
@@ -154,7 +174,7 @@ def new_plan():
         selected_profile = request.form.get("profile_id", "")
         profile_id = request.form.get("profile_id", type=int)
         if targets is None:
-            error = "Enter a plan name and at least one named exercise. Sets and reps must be positive whole numbers. Target weight, if provided, must be zero or greater."
+            error = PLAN_VALIDATION_ERROR
         elif selected_profile and (profile_id is None or not 0 < profile_id < 2**63):
             error = "Select one of your linked clients."
         else:
@@ -167,22 +187,72 @@ def new_plan():
                 )
                 if result.rowcount:
                     plan_id = result.lastrowid
-                    g.db.executemany(
-                        "INSERT INTO plan_exercises (plan_id, position, name, target_sets, target_reps, target_weight_lb) "
-                        "VALUES (?, ?, ?, ?, ?, ?)",
-                        [(plan_id, position, *target) for position, target in enumerate(targets, 1)],
-                    )
+                    write_plan_exercises(plan_id, targets)
                 else:
                     error = "Select one of your linked clients."
             if error is None:
                 return redirect(url_for("planning.plan_detail", plan_id=plan_id))
-    templates = g.db.execute(
-        "SELECT id, name FROM templates WHERE trainer_id = ? ORDER BY name, id",
-        (g.user["id"],),
-    ).fetchall()
     return render_template(
         "new_plan.html", name=name, rows=rows, clients=linked_clients(),
-        templates=templates, error=error, reorder=True,
+        templates=owned_templates(), error=error, reorder=True,
+    ), 400 if error else 200
+
+
+@bp.route("/planning/clients/<int:client_id>/new", methods=["GET", "POST"])
+def plan_for_client(client_id):
+    if not 0 < client_id < 2**63:
+        abort(404)
+    client = get_visible_client(client_id)
+    if client["client_user_id"] is None:
+        abort(409, description="Connect this client account before assigning a plan.")
+
+    selection = request.form if request.method == "POST" else request.args
+    template_id = selection.get("template_id", type=int)
+    if selection.get("template_id") and (template_id is None or not 0 < template_id < 2**63):
+        abort(400)
+    template = None
+    if template_id is not None:
+        template = g.db.execute(
+            "SELECT id, name FROM templates WHERE id = ? AND trainer_id = ?",
+            (template_id, g.user["id"]),
+        ).fetchone()
+        if template is None:
+            abort(404)
+
+    name = ""
+    rows = [("", "", "", "")]
+    error = None
+    if request.method == "POST":
+        check_csrf()
+        name, rows, targets = read_workout_fields()
+        if targets is None:
+            error = PLAN_VALIDATION_ERROR
+        else:
+            with g.db:
+                result = g.db.execute(
+                    "INSERT INTO plans (trainer_id, profile_id, source_template_id, name) "
+                    "SELECT trainer_id, id, ?, ? FROM clients "
+                    "WHERE id = ? AND trainer_id = ? AND client_user_id IS NOT NULL "
+                    "AND (? IS NULL OR EXISTS (SELECT 1 FROM templates WHERE id = ? AND trainer_id = clients.trainer_id))",
+                    (template_id, name, client_id, g.user["id"], template_id, template_id),
+                )
+                if not result.rowcount:
+                    abort(409, description="The client or template changed. Reopen the plan form.")
+                plan_id = result.lastrowid
+                write_plan_exercises(plan_id, targets)
+            return redirect(url_for("planning.plan_detail", plan_id=plan_id))
+    elif template is not None:
+        name = template["name"]
+        rows = g.db.execute(
+            "SELECT name, target_sets, target_reps, target_weight_lb FROM template_exercises "
+            "WHERE template_id = ? ORDER BY position",
+            (template_id,),
+        ).fetchall() or rows
+
+    return render_template(
+        "plan_editor.html", client=client, template=template, templates=owned_templates(),
+        show_editor=template is not None or "blank" in request.args or request.method == "POST",
+        name=name, rows=rows, error=error, reorder=True,
     ), 400 if error else 200
 
 
@@ -214,6 +284,40 @@ def get_plan_exercises(plan_id):
         "WHERE plan_id = ? ORDER BY position",
         (plan_id,),
     ).fetchall()
+
+
+@bp.route("/planning/plans/<int:plan_id>/edit", methods=["GET", "POST"])
+def edit_plan(plan_id):
+    if not 0 < plan_id < 2**63:
+        abort(404)
+    plan = get_visible_plan(plan_id)
+    if plan["profile_id"] is not None:
+        abort(409, description="This plan has already been assigned.")
+
+    name = plan["name"]
+    rows = get_plan_exercises(plan_id)
+    error = None
+    if request.method == "POST":
+        check_csrf()
+        name, rows, targets = read_workout_fields()
+        if targets is None:
+            error = PLAN_VALIDATION_ERROR
+        else:
+            with g.db:
+                updated = g.db.execute(
+                    "UPDATE plans SET name = ? WHERE id = ? AND trainer_id = ? AND profile_id IS NULL",
+                    (name, plan_id, g.user["id"]),
+                )
+                if not updated.rowcount:
+                    abort(409, description="This plan is no longer available to edit.")
+                g.db.execute("DELETE FROM plan_exercises WHERE plan_id = ?", (plan_id,))
+                write_plan_exercises(plan_id, targets)
+            return redirect(url_for("planning.plan_detail", plan_id=plan_id))
+
+    return render_template(
+        "plan_editor.html", plan=plan, show_editor=True, name=name,
+        rows=rows or [("", "", "", "")], error=error, reorder=True,
+    ), 400 if error else 200
 
 
 @bp.route("/planning/plans/<int:plan_id>", methods=["GET", "POST"])

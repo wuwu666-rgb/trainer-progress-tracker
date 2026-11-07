@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "exercise_fields.html" import exercise_fields with context %}
+
+{% macro compact_exercise(exercise='', sets='', reps='', weight='', expanded=false) %}
+<details class="plan-exercise" name="plan-exercises" data-plan-exercise{% if expanded %} open{% endif %}>
+  <summary>
+    <strong data-plan-exercise-name>{{ exercise or 'New exercise' }}</strong>
+    <span class="exercise-metrics" data-plan-exercise-targets>{% if sets and reps %}{{ sets }} sets × {{ reps }} reps{% endif %}</span>
+  </summary>
+  {{ exercise_fields(exercise, sets, reps, weight) }}
+</details>
+{% endmacro %}
+
+{% block content %}
+<div class="workspace-page workspace-form-page">
+  {% if client is defined %}
+  {% set editor_url = url_for('planning.plan_for_client', client_id=client.id, q=request.args.get('q') or none) %}
+  <div class="workspace-actions workspace-back">
+    <a class="button workspace-secondary" href="{{ url_for('clients.index', focus=client.id, q=request.args.get('q') or none, _anchor='client-' ~ client.id) }}">← Back to clients</a>
+  </div>
+  <div class="workspace-heading"><h1>Plan for {{ client.name }}</h1></div>
+  {% else %}
+  <div class="workspace-actions workspace-back">
+    <a class="button workspace-secondary" href="{{ url_for('planning.plan_detail', plan_id=plan.id) }}">← Back to plan</a>
+  </div>
+  <div class="workspace-heading"><h1>Edit plan</h1></div>
+  {% endif %}
+
+  {% if not show_editor %}
+  {% if templates %}
+  <form method="get" action="{{ editor_url }}">
+    {% if request.args.get('q') %}<input type="hidden" name="q" value="{{ request.args.get('q') }}">{% endif %}
+    <div>
+      <label for="client-plan-template">Saved template</label>
+      <select id="client-plan-template" name="template_id" class="role-select" required>
+        <option value="">Choose a template</option>
+        {% for item in templates %}<option value="{{ item.id }}">{{ item.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <button type="submit">Use template</button>
+    <a href="{{ url_for('planning.plan_for_client', client_id=client.id, q=request.args.get('q') or none, blank=1) }}">Start from scratch</a>
+  </form>
+  {% else %}
+  <div class="workspace-actions">
+    <a class="button" href="{{ url_for('planning.plan_for_client', client_id=client.id, q=request.args.get('q') or none, blank=1) }}">Start from scratch</a>
+  </div>
+  {% endif %}
+  {% else %}
+  <p>Open an exercise to adjust it.</p>
+  {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+  <form method="post" class="template-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if template %}<input type="hidden" name="template_id" value="{{ template.id }}">{% endif %}
+    <label>Plan name <input name="name" value="{{ name }}" required></label>
+    <div id="exercise-list">
+      {% for exercise, sets, reps, weight in rows %}
+      {{ compact_exercise(exercise, sets, reps, weight, expanded=not exercise and loop.first) }}
+      {% endfor %}
+    </div>
+    <button type="button" id="add-exercise">Add exercise</button>
+    <button type="submit">{{ 'Assign to ' ~ client.name if client is defined else 'Save changes' }}</button>
+    {% if client is defined and templates %}<a href="{{ editor_url }}">Choose a different starting point</a>{% endif %}
+  </form>
+  <template id="exercise-fields">{{ compact_exercise() }}</template>
+  <script src="{{ url_for('static', filename='planning.js') }}" defer></script>
+  {% endif %}
+</div>
+{% endblock %}
