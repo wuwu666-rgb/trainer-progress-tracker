@@ -188,7 +188,9 @@ def new_plan():
 
 def get_assigned_plans():
     return g.db.execute(
-        "SELECT p.id, p.name FROM plans AS p "
+        "SELECT p.id, p.name, EXISTS (SELECT 1 FROM workout_sessions AS w "
+        "WHERE w.source_plan_id = p.id AND w.recorder_id = c.client_user_id "
+        "AND w.client_id = c.id AND w.completed_at IS NULL) AS in_progress FROM plans AS p "
         "JOIN clients AS c ON c.id = p.profile_id AND c.trainer_id = p.trainer_id "
         "WHERE c.client_user_id = ? ORDER BY p.id DESC",
         (g.user["id"],),
@@ -247,9 +249,14 @@ def plan_detail(plan_id):
             error = "The plan could not be assigned. Check the linked client or reload the page."
             status = 409
 
+    in_progress = plan["profile_id"] is not None and g.db.execute(
+        "SELECT 1 FROM workout_sessions WHERE source_plan_id = ? AND recorder_id = ? "
+        "AND client_id = ? AND completed_at IS NULL",
+        (plan_id, g.user["id"], plan["profile_id"]),
+    ).fetchone() is not None
     return render_template(
         "plan_detail.html", plan=plan, exercises=get_plan_exercises(plan_id), error=error,
-        clients=linked_clients() if trainer and plan["profile_id"] is None else (),
+        clients=linked_clients() if trainer and plan["profile_id"] is None else (), in_progress=in_progress,
     ), status
 
 @bp.route("/planning/<collection>/<int:item_id>/delete", methods=["GET", "POST"])

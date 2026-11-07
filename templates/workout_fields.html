@@ -1,0 +1,58 @@
+{% macro set_fields(key, unit, number, result="", weight="") %}
+<div class="workout-set" data-workout-set>
+  <div class="workout-set-heading">
+    <strong data-set-number>Set {{ number }}</strong>
+    <button class="workout-text-button" type="button" data-remove-set aria-label="Remove set {{ number }}">Remove</button>
+  </div>
+  <div class="workout-set-inputs">
+    <label><span data-result-label>{{ 'Minutes' if unit == 'minutes' else 'Reps' }}</span>
+      <input type="number" name="result_{{ key }}" min="{{ '0' if unit == 'minutes' else '1' }}" step="{{ 'any' if unit == 'minutes' else '1' }}" inputmode="{{ 'decimal' if unit == 'minutes' else 'numeric' }}" value="{{ result }}" data-set-result>
+    </label>
+    <label data-weight-field{% if unit == 'minutes' %} hidden{% endif %}>Weight (lb)
+      <input type="number" name="weight_{{ key }}" min="0" step="any" inputmode="decimal" value="{{ weight }}" data-set-weight>
+    </label>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro exercise_fields(exercise, number, expanded=false) %}
+{% set key = exercise.key %}
+<details class="workout-exercise" name="workout-exercises"{% if expanded %} open{% endif %} data-workout-exercise="{{ key }}">
+  <summary>
+    <span data-exercise-title>{{ exercise.name or 'Exercise ' ~ number }}</span>
+    <span class="workout-target">
+      {% if exercise.target_sets is not none %}
+      <span>Planned: {{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps{% if exercise.target_weight_lb is not none %} · {{ exercise.target_weight_lb }} lb{% endif %}</span>
+      {% endif %}
+      {% set entered = exercise.sets|selectattr('0')|list|length %}
+      <span data-set-progress{% if not entered %} hidden{% endif %}>{{ entered }} {{ 'set' if entered == 1 else 'sets' }} entered</span>
+    </span>
+  </summary>
+  <div class="workout-exercise-body">
+    <input type="hidden" name="exercise_key" value="{{ key }}">
+    {% if exercise.target_sets is none %}
+    <div class="record-result-fields">
+      <label>Exercise name
+        <input name="name_{{ key }}" maxlength="120" value="{{ exercise.name }}" placeholder="e.g. Squat" data-exercise-name>
+      </label>
+      <label>Measure in
+        <select name="unit_{{ key }}" class="role-select" data-set-unit>
+          <option value="reps"{% if exercise.unit == 'reps' %} selected{% endif %}>Reps</option>
+          <option value="minutes"{% if exercise.unit == 'minutes' %} selected{% endif %}>Minutes</option>
+        </select>
+      </label>
+    </div>
+    {% endif %}
+    <p class="workout-actual-label">Actual results</p>
+    <div class="workout-sets" data-workout-sets>
+      {% for result, weight in exercise.sets or [('', '')] %}
+      {{ set_fields(key, exercise.unit, loop.index, result, weight) }}
+      {% endfor %}
+    </div>
+    <button class="workspace-secondary" type="button" data-add-set>+ Add set</button>
+    {% if exercise.target_sets is none %}
+    <button class="workout-text-button workout-remove-exercise" type="button" data-remove-exercise>Remove exercise</button>
+    {% endif %}
+  </div>
+</details>
+{% endmacro %}

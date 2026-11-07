@@ -25,11 +25,11 @@
   <div class="bottom-nav-links">
     {{ tab('Home', 'home', request.endpoint == 'home') }}
     {% if g.user.role == 'trainer' %}
-    {{ tab('Clients', 'clients.index', request.blueprint in ('clients', 'sessions', 'history')) }}
+    {{ tab('Clients', 'clients.index', request.blueprint in ('clients', 'sessions', 'history', 'workout_sessions')) }}
     {{ tab('Plans', 'planning.index', request.blueprint == 'planning') }}
     {% else %}
-    {{ tab('Workouts', 'dashboard', dashboard_page == 'workouts' or request.endpoint == 'planning.plan_detail', 'workouts') }}
-    {{ tab('Progress', 'dashboard', dashboard_page == 'progress' or request.blueprint == 'history', 'progress') }}
+    {{ tab('Workouts', 'dashboard', dashboard_page == 'workouts' or request.endpoint in ('planning.plan_detail', 'workout_sessions.record'), 'workouts') }}
+    {{ tab('Progress', 'dashboard', dashboard_page == 'progress' or request.blueprint == 'history' or request.endpoint == 'workout_sessions.detail', 'progress') }}
     {% endif %}
     {{ tab('Account', 'dashboard', dashboard_page == 'account', 'account') }}
   </div>

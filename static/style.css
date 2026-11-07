@@ -179,6 +179,8 @@ main input:not([type="hidden"]), main textarea, main select, main button { min-h
 main input, main textarea, main select { font-size: 1rem; }
 main :target { scroll-margin-top: 1rem; }
 .workspace-card-heading h2 { margin: 0; min-width: 0; font-size: 1.1rem; }
+.history-card-heading { overflow-wrap: anywhere; }
+.history-card-heading h2 { font-size: 1.25rem; }
 .workspace-row-link {
   display: flex;
   justify-content: space-between;
@@ -262,5 +264,44 @@ header { border-bottom-color: #e5e0d8; }
 .record-extra summary span { margin-inline-start: .4rem; font-size: .875rem; }
 .record-extra > label { display: block; margin-top: .55rem; }
 .record-extra > label[hidden] { display: none; }
+
+.workout-page { max-width: 42rem; overflow-wrap: anywhere; }
+.workout-start-form, .workout-editor { width: 100%; max-width: none; }
+.workout-start-actions { display: grid; gap: .65rem; margin-block: 1rem; }
+.workout-start-form.inline-action { display: grid; }
+.workout-plan-options { border: 1px solid #ddccef; border-radius: .5rem; background: white; }
+.workout-plan-options > summary { min-height: 44px; padding: .45rem .8rem; align-content: center; cursor: pointer; color: #6532a5; font-weight: 650; }
+.workout-plan-options > form { margin: 0; border: 0; border-top: 1px solid #ddccef; border-radius: 0; background: transparent; }
+.workout-draft-list { padding: .25rem .75rem .75rem; }
+.workout-title { display: block; }
+.workout-notice { padding: .65rem .8rem; background: white; border: 1px solid #ddccef; border-radius: .5rem; }
+.workout-date, .workout-exercise { padding: .65rem; background: #fbf8ff; border: 1px solid #ddccef; border-radius: .6rem; }
+.workout-date summary, .workout-exercise summary { min-height: 44px; align-content: center; cursor: pointer; }
+.workout-exercise summary { font-weight: 700; }
+.workout-target { display: block; font-size: .875rem; font-weight: 500; color: #625b71; }
+.workout-target > span + [data-set-progress]::before { content: ' · '; }
+.workout-exercises, .workout-exercise-body, .workout-sets { display: grid; gap: .65rem; min-width: 0; }
+.workout-exercise-body { padding-top: .5rem; }
+.workout-actual-label { margin: 0; font-weight: 650; }
+.workout-set { min-width: 0; padding: .6rem; background: white; border: 1px solid #ddccef; border-radius: .5rem; }
+.workout-set-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem; }
+.workout-set-inputs, .workout-save-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; }
+.workout-save-actions p { grid-column: 1 / -1; margin: 0; color: #625b71; font-size: .9rem; }
+.workout-editor input, .workout-editor select { min-width: 0; }
+.workout-editor button, .workout-start-form button, .workout-editor input:not([type=hidden]), .workout-discard button { min-height: 44px; }
+.workout-editor [hidden] { display: none; }
+.workout-editor input, .workout-editor button { scroll-margin-bottom: 5rem; }
+.workout-text-button { background: transparent; color: #6532a5; font-size: .9rem; }
+.workout-text-button:hover { background: #eee3fc; color: #512486; }
+.workout-remove-exercise { justify-self: start; }
+.workout-discard { margin-inline: auto; width: max-content; }
+.workout-results h2 { font-size: 1.15rem; }
+.workout-results ol { padding: 0; margin: 0; list-style: none; }
+.workout-results li { display: flex; flex-wrap: wrap; gap: .25rem .65rem; justify-content: space-between; padding: .55rem 0; border-top: 1px solid #ddccef; }
+
+@media (max-width: 360px) {
+  .workout-editor { padding: .65rem; }
+  .workout-exercise-body .record-result-fields { grid-template-columns: 1fr; }
+}
 
 .target-weight summary { min-height: 44px; align-content: center; cursor: pointer; color: #625b71; }

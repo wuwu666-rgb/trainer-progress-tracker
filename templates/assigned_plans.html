@@ -14,7 +14,7 @@
     {% for plan in plans %}
     <a class="workspace-card workspace-row-link" href="{{ url_for('planning.plan_detail', plan_id=plan.id) }}">
       <span>{{ plan.name }}</span>
-      <span aria-hidden="true">›</span>
+      {% if plan.in_progress %}<span class="workspace-status is-connected">In progress</span>{% else %}<span aria-hidden="true">›</span>{% endif %}
     </a>
     {% else %}
     <p class="workspace-empty">No workouts have been assigned to you yet.</p>

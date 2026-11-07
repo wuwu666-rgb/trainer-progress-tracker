@@ -77,3 +77,37 @@ CREATE TABLE IF NOT EXISTS plan_exercises (
     target_weight_lb TEXT,
     PRIMARY KEY (plan_id, position)
 );
+
+CREATE TABLE IF NOT EXISTS workout_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL REFERENCES clients(id),
+    recorder_id INTEGER NOT NULL REFERENCES users(id),
+    source_plan_id INTEGER REFERENCES plans(id) ON DELETE SET NULL,
+    plan_name TEXT,
+    workout_date TEXT NOT NULL,
+    completed_at TEXT,
+    revision INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS workout_sessions_by_client
+ON workout_sessions (client_id, workout_date DESC, id DESC);
+
+CREATE TABLE IF NOT EXISTS workout_session_exercises (
+    id INTEGER PRIMARY KEY,
+    workout_id INTEGER NOT NULL REFERENCES workout_sessions(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    unit TEXT NOT NULL CHECK (unit IN ('reps', 'minutes')),
+    target_sets INTEGER,
+    target_reps INTEGER,
+    target_weight_lb TEXT,
+    UNIQUE (workout_id, position)
+);
+
+CREATE TABLE IF NOT EXISTS workout_session_sets (
+    exercise_id INTEGER NOT NULL REFERENCES workout_session_exercises(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,
+    result TEXT,
+    weight_lb TEXT,
+    PRIMARY KEY (exercise_id, position)
+);
