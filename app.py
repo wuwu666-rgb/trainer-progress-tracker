@@ -133,6 +133,11 @@ def init_database(*, seed_demo=False):
                     f"ALTER TABLE {table} ADD COLUMN set_count INTEGER NOT NULL DEFAULT 1 CHECK (set_count > 0)"
                 )
 
+        for table in ("template_exercises", "plan_exercises"):
+            columns = {column[1] for column in db.execute(f"PRAGMA table_info({table})")}
+            if "target_weight_lb" not in columns:
+                db.execute(f"ALTER TABLE {table} ADD COLUMN target_weight_lb TEXT")
+
         plan_columns = {column[1] for column in db.execute("PRAGMA table_info(plans)")}
         if "profile_id" not in plan_columns:
             db.execute("ALTER TABLE plans ADD COLUMN profile_id INTEGER REFERENCES clients(id)")

@@ -262,3 +262,5 @@ header { border-bottom-color: #e5e0d8; }
 .record-extra summary span { margin-inline-start: .4rem; font-size: .875rem; }
 .record-extra > label { display: block; margin-top: .55rem; }
 .record-extra > label[hidden] { display: none; }
+
+.target-weight summary { min-height: 44px; align-content: center; cursor: pointer; color: #625b71; }

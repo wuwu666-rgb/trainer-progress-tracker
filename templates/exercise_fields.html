@@ -1,4 +1,4 @@
-{% macro exercise_fields(exercise='', sets='', reps='') %}
+{% macro exercise_fields(exercise='', sets='', reps='', weight='') %}
 <fieldset class="exercise-card">
   <legend>Exercise</legend>
   <label>Exercise name <input name="exercise" value="{{ exercise }}" required></label>
@@ -6,6 +6,12 @@
     <label>Sets <input type="number" name="target_sets" inputmode="numeric" min="1" step="1" value="{{ sets }}" required></label>
     <label>Reps per set <input type="number" name="target_reps" inputmode="numeric" min="1" step="1" value="{{ reps }}" required></label>
   </div>
+  <details class="target-weight"{% if weight %} open{% endif %}>
+    <summary>Add target weight</summary>
+    <label>Target weight (lb, optional)
+      <input type="number" name="target_weight_lb" inputmode="decimal" min="0" step="any" value="{{ weight if weight is not none else '' }}">
+    </label>
+  </details>
   <div class="exercise-actions">
   {% if reorder %}
   <button type="button" data-move-exercise="up">Move up</button>

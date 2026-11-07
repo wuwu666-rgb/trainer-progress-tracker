@@ -1,3 +1,4 @@
+from decimal import Decimal, InvalidOperation
 from itertools import zip_longest
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
@@ -9,23 +10,30 @@ bp = Blueprint("planning", __name__)
 
 def read_workout_fields():
     name = request.form.get("name", "").strip()
+    exercises = request.form.getlist("exercise")
+    weights = request.form.getlist("target_weight_lb") or [""] * len(exercises)
     rows = list(zip_longest(
-        request.form.getlist("exercise"),
+        exercises,
         request.form.getlist("target_sets"),
         request.form.getlist("target_reps"),
+        weights,
         fillvalue="",
-    )) or [("", "", "")]
+    )) or [("", "", "", "")]
     targets = []
     try:
-        if not name:
+        if not name or len(weights) != len(exercises):
             raise ValueError
-        for exercise, sets, reps in rows:
+        for exercise, sets, reps, weight in rows:
             exercise = exercise.strip()
             sets, reps = int(sets), int(reps)
+            weight = weight.strip()
+            target_weight = Decimal(weight) if weight else None
             if not exercise or not (0 < sets < 2**63 and 0 < reps < 2**63):
                 raise ValueError
-            targets.append((exercise, sets, reps))
-    except ValueError:
+            if target_weight is not None and (not target_weight.is_finite() or target_weight < 0):
+                raise ValueError
+            targets.append((exercise, sets, reps, str(target_weight) if target_weight is not None else None))
+    except (ValueError, InvalidOperation):
         return name, rows, None
     return name, rows, targets
 
@@ -42,7 +50,7 @@ def linked_clients():
 @bp.route("/planning/templates/<int:template_id>/edit", methods=["GET", "POST"])
 def index(template_id=None):
     name = ""
-    rows = [("", "", "")]
+    rows = [("", "", "", "")]
     error = None
 
     if template_id is not None:
@@ -54,7 +62,7 @@ def index(template_id=None):
             abort(404)
         name = template["name"]
         rows = g.db.execute(
-            "SELECT name, target_sets, target_reps FROM template_exercises "
+            "SELECT name, target_sets, target_reps, target_weight_lb FROM template_exercises "
             "WHERE template_id = ? ORDER BY position",
             (template_id,),
         ).fetchall()
@@ -63,7 +71,7 @@ def index(template_id=None):
         check_csrf()
         name, rows, targets = read_workout_fields()
         if targets is None:
-            error = "Enter a template name and at least one named exercise. Sets and reps must be positive whole numbers."
+            error = "Enter a template name and at least one named exercise. Sets and reps must be positive whole numbers. Target weight, if provided, must be zero or greater."
         else:
             with g.db:
                 if template_id is None:
@@ -82,14 +90,14 @@ def index(template_id=None):
                     )
                 g.db.executemany(
                     "INSERT INTO template_exercises "
-                    "(template_id, position, name, target_sets, target_reps) VALUES (?, ?, ?, ?, ?)",
+                    "(template_id, position, name, target_sets, target_reps, target_weight_lb) VALUES (?, ?, ?, ?, ?, ?)",
                     [(template_id, position, *target) for position, target in enumerate(targets, 1)],
                 )
             return redirect(url_for("planning.index"))
 
     templates = {}
     for exercise in g.db.execute(
-        "SELECT t.id, t.name AS template_name, e.name, e.target_sets, e.target_reps "
+        "SELECT t.id, t.name AS template_name, e.name, e.target_sets, e.target_reps, e.target_weight_lb "
         "FROM templates AS t JOIN template_exercises AS e ON e.template_id = t.id "
         "WHERE t.trainer_id = ? ORDER BY t.id DESC, e.position",
         (g.user["id"],),
@@ -110,8 +118,13 @@ def index(template_id=None):
 
 
 @bp.post("/planning/templates/<int:template_id>/copy")
-def copy_template(template_id):
+@bp.post("/planning/plans/from-template")
+def copy_template(template_id=None):
     check_csrf()
+    if template_id is None:
+        template_id = request.form.get("template_id", type=int)
+        if template_id is None or not 0 < template_id < 2**63:
+            abort(400)
     with g.db:
         result = g.db.execute(
             "INSERT INTO plans (trainer_id, source_template_id, name) "
@@ -122,8 +135,8 @@ def copy_template(template_id):
             abort(404)
         plan_id = result.lastrowid
         g.db.execute(
-            "INSERT INTO plan_exercises (plan_id, position, name, target_sets, target_reps) "
-            "SELECT ?, position, name, target_sets, target_reps "
+            "INSERT INTO plan_exercises (plan_id, position, name, target_sets, target_reps, target_weight_lb) "
+            "SELECT ?, position, name, target_sets, target_reps, target_weight_lb "
             "FROM template_exercises WHERE template_id = ?",
             (plan_id, template_id),
         )
@@ -133,38 +146,43 @@ def copy_template(template_id):
 @bp.route("/planning/plans/new", methods=["GET", "POST"])
 def new_plan():
     name = ""
-    rows = [("", "", "")]
+    rows = [("", "", "", "")]
     error = None
     if request.method == "POST":
         check_csrf()
         name, rows, targets = read_workout_fields()
+        selected_profile = request.form.get("profile_id", "")
         profile_id = request.form.get("profile_id", type=int)
         if targets is None:
-            error = "Enter a plan name and at least one named exercise. Sets and reps must be positive whole numbers."
-        elif profile_id is None or not 0 < profile_id < 2**63:
+            error = "Enter a plan name and at least one named exercise. Sets and reps must be positive whole numbers. Target weight, if provided, must be zero or greater."
+        elif selected_profile and (profile_id is None or not 0 < profile_id < 2**63):
             error = "Select one of your linked clients."
         else:
             with g.db:
                 result = g.db.execute(
                     "INSERT INTO plans (trainer_id, profile_id, name) "
-                    "SELECT trainer_id, id, ? FROM clients "
-                    "WHERE id = ? AND trainer_id = ? AND client_user_id IS NOT NULL",
-                    (name, profile_id, g.user["id"]),
+                    "SELECT ?, ?, ? WHERE ? IS NULL OR EXISTS ("
+                    "SELECT 1 FROM clients WHERE id = ? AND trainer_id = ? AND client_user_id IS NOT NULL)",
+                    (g.user["id"], profile_id, name, profile_id, profile_id, g.user["id"]),
                 )
                 if result.rowcount:
                     plan_id = result.lastrowid
                     g.db.executemany(
-                        "INSERT INTO plan_exercises (plan_id, position, name, target_sets, target_reps) "
-                        "VALUES (?, ?, ?, ?, ?)",
+                        "INSERT INTO plan_exercises (plan_id, position, name, target_sets, target_reps, target_weight_lb) "
+                        "VALUES (?, ?, ?, ?, ?, ?)",
                         [(plan_id, position, *target) for position, target in enumerate(targets, 1)],
                     )
                 else:
                     error = "Select one of your linked clients."
             if error is None:
                 return redirect(url_for("planning.plan_detail", plan_id=plan_id))
+    templates = g.db.execute(
+        "SELECT id, name FROM templates WHERE trainer_id = ? ORDER BY name, id",
+        (g.user["id"],),
+    ).fetchall()
     return render_template(
         "new_plan.html", name=name, rows=rows, clients=linked_clients(),
-        error=error, reorder=True,
+        templates=templates, error=error, reorder=True,
     ), 400 if error else 200
 
 
@@ -177,10 +195,8 @@ def get_assigned_plans():
     ).fetchall()
 
 
-@bp.route("/planning/plans/<int:plan_id>", methods=["GET", "POST"])
-def plan_detail(plan_id):
-    trainer = g.user["role"] == "trainer"
-    access = "p.trainer_id" if trainer else "c.client_user_id"
+def get_visible_plan(plan_id):
+    access = "p.trainer_id" if g.user["role"] == "trainer" else "c.client_user_id"
     plan = g.db.execute(
         "SELECT p.id, p.name, p.profile_id, c.name AS client_name FROM plans AS p "
         "LEFT JOIN clients AS c ON c.id = p.profile_id AND c.trainer_id = p.trainer_id "
@@ -189,7 +205,21 @@ def plan_detail(plan_id):
     ).fetchone()
     if plan is None:
         abort(404)
+    return plan
 
+
+def get_plan_exercises(plan_id):
+    return g.db.execute(
+        "SELECT name, target_sets, target_reps, target_weight_lb FROM plan_exercises "
+        "WHERE plan_id = ? ORDER BY position",
+        (plan_id,),
+    ).fetchall()
+
+
+@bp.route("/planning/plans/<int:plan_id>", methods=["GET", "POST"])
+def plan_detail(plan_id):
+    trainer = g.user["role"] == "trainer"
+    plan = get_visible_plan(plan_id)
     error = None
     status = 200
     if request.method == "POST":
@@ -217,13 +247,8 @@ def plan_detail(plan_id):
             error = "The plan could not be assigned. Check the linked client or reload the page."
             status = 409
 
-    exercises = g.db.execute(
-        "SELECT name, target_sets, target_reps FROM plan_exercises "
-        "WHERE plan_id = ? ORDER BY position",
-        (plan_id,),
-    ).fetchall()
     return render_template(
-        "plan_detail.html", plan=plan, exercises=exercises, error=error,
+        "plan_detail.html", plan=plan, exercises=get_plan_exercises(plan_id), error=error,
         clients=linked_clients() if trainer and plan["profile_id"] is None else (),
     ), status
 

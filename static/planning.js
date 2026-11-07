@@ -22,6 +22,11 @@ document.querySelector("#add-exercise").addEventListener("click", () => {
   exerciseList.lastElementChild.querySelector("input").focus();
 });
 
+exerciseList.addEventListener("invalid", (event) => {
+  const weightDetails = event.target.closest(".target-weight");
+  if (weightDetails) weightDetails.open = true;
+}, true);
+
 exerciseList.addEventListener("click", (event) => {
   const button = event.target.closest("button");
   if (!button) return;
