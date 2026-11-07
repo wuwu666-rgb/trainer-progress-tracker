@@ -1,11 +1,101 @@
-from decimal import Decimal
+from datetime import date
+from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
 from auth import check_csrf
 from clients import get_visible_client
+from training_dates import today_in_new_york
 
 bp = Blueprint("history", __name__)
+
+
+@bp.get("/clients/<int:client_id>/body-weights")
+def body_weights(client_id):
+    if not 0 < client_id < 2**63:
+        abort(404)
+    client = get_visible_client(client_id)
+    entries = g.db.execute(
+        "SELECT id, measurement_date, weight_lb FROM body_weights "
+        "WHERE client_id = ? ORDER BY measurement_date DESC", (client_id,),
+    ).fetchall()
+    return render_template("body_weights.html", client=client, entries=entries)
+
+
+@bp.route("/clients/<int:client_id>/body-weights/new", methods=["GET", "POST"])
+@bp.route("/clients/<int:client_id>/body-weights/<int:entry_id>/edit", methods=["GET", "POST"])
+def edit_body_weight(client_id, entry_id=None):
+    if g.user["role"] != "trainer":
+        abort(403)
+    if not 0 < client_id < 2**63 or (entry_id is not None and not 0 < entry_id < 2**63):
+        abort(404)
+    client = get_visible_client(client_id)
+    today = today_in_new_york().isoformat()
+    entry = None
+    if entry_id is not None:
+        entry = g.db.execute(
+            "SELECT measurement_date, weight_lb, revision FROM body_weights WHERE id = ? AND client_id = ?",
+            (entry_id, client_id),
+        ).fetchone()
+        if entry is None:
+            abort(404)
+    measurement_date = entry["measurement_date"] if entry else today
+    weight = entry["weight_lb"] if entry else ""
+    revision = entry["revision"] if entry else None
+    error, status = None, 200
+    if request.method == "POST":
+        check_csrf()
+        measurement_date = request.form.get("measurement_date", "")
+        weight = request.form.get("weight_lb", "").strip()
+        try:
+            if date.fromisoformat(measurement_date).isoformat() != measurement_date or measurement_date > today:
+                raise ValueError
+        except ValueError:
+            error = "Choose a valid date on or before today."
+        if error is None:
+            try:
+                if len(weight) > 64:
+                    raise ValueError
+                value = Decimal(weight)
+                if not value.is_finite() or value <= 0:
+                    raise ValueError
+            except (InvalidOperation, ValueError):
+                error = "Enter a body weight greater than zero."
+        if error:
+            status = 400
+        else:
+            with g.db:
+                g.db.execute("BEGIN IMMEDIATE")
+                get_visible_client(client_id)
+                if entry and request.form.get("revision") != str(revision):
+                    return redirect(url_for("history.edit_body_weight", client_id=client_id, entry_id=entry_id, stale=1))
+                duplicate = g.db.execute(
+                    "SELECT id FROM body_weights WHERE client_id = ? AND measurement_date = ? AND id IS NOT ?",
+                    (client_id, measurement_date, entry_id),
+                ).fetchone()
+                if duplicate:
+                    error, status = "A measurement already exists for this date. Edit it from Body-weight history.", 409
+                elif entry:
+                    updated = g.db.execute(
+                        "UPDATE body_weights SET measurement_date = ?, weight_lb = ?, revision = revision + 1 "
+                        "WHERE id = ? AND client_id = ? AND revision = ?",
+                        (measurement_date, str(value), entry_id, client_id, revision),
+                    )
+                    if not updated.rowcount:
+                        return redirect(url_for("history.edit_body_weight", client_id=client_id, entry_id=entry_id, stale=1))
+                else:
+                    g.db.execute(
+                        "INSERT INTO body_weights (client_id, recorded_by, measurement_date, weight_lb) VALUES (?, ?, ?, ?)",
+                        (client_id, g.user["id"], measurement_date, str(value)),
+                    )
+            if error is None:
+                return redirect(url_for("history.body_weights", client_id=client_id))
+    elif request.args.get("stale") and entry:
+        error = "This measurement changed. Review the current values before saving."
+    return render_template(
+        "body_weight_form.html", client=client, entry=entry, measurement_date=measurement_date,
+        weight=weight, revision=revision, today=today, error=error,
+    ), status
 
 
 def get_workouts(client_id):

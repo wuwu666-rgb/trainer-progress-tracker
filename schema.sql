@@ -111,3 +111,13 @@ CREATE TABLE IF NOT EXISTS workout_session_sets (
     weight_lb TEXT,
     PRIMARY KEY (exercise_id, position)
 );
+
+CREATE TABLE IF NOT EXISTS body_weights (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL REFERENCES clients(id),
+    recorded_by INTEGER NOT NULL REFERENCES users(id),
+    measurement_date TEXT NOT NULL,
+    weight_lb TEXT NOT NULL,
+    revision INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (client_id, measurement_date)
+);
