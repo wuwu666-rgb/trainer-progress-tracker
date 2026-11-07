@@ -14,7 +14,7 @@
   <h2>Planned exercises</h2>
   <ol class="workspace-exercises">
     {% for exercise in exercises %}
-    <li>{{ exercise.name }} <span class="exercise-metrics">{{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps</span></li>
+    <li>{{ exercise.name }} <span class="exercise-metrics">{{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps{% if exercise.target_weight_lb is not none %} · {{ exercise.target_weight_lb }} lb target{% endif %}</span></li>
     {% endfor %}
   </ol>
 </section>
@@ -23,8 +23,9 @@
 <div class="workspace-actions">
   <a class="button workspace-secondary" href="{{ url_for('planning.delete_item', collection='plans', item_id=plan.id) }}">Delete plan</a>
 </div>
-<h2>Assign this plan</h2>
+<h2>Assign to client</h2>
 {% if clients %}
+<p>The client can view this plan in Workouts.</p>
 <form method="post">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   {% include "client_picker.html" %}

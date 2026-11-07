@@ -8,7 +8,7 @@
     <p>Reuse a training template or build a one-time plan for a client.</p>
     {% if not editing %}
     <div class="workspace-actions">
-      <a class="button" href="{{ url_for('planning.new_plan') }}">Create plan from scratch</a>
+      <a class="button" href="{{ url_for('planning.new_plan') }}">Create plan</a>
       <a class="button workspace-secondary" href="#saved-plans">Saved plans</a>
     </div>
     {% endif %}
@@ -21,8 +21,8 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>Template name <input name="name" value="{{ name }}" required></label>
       <div id="exercise-list">
-        {% for exercise, sets, reps in rows %}
-        {{ exercise_fields(exercise, sets, reps) }}
+        {% for exercise, sets, reps, weight in rows %}
+        {{ exercise_fields(exercise, sets, reps, weight) }}
         {% endfor %}
       </div>
       <button type="button" id="add-exercise">Add exercise</button>
@@ -43,14 +43,10 @@
       </div>
       <ol class="workspace-exercises">
         {% for exercise in template.exercises %}
-        <li>{{ exercise.name }} · {{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps</li>
+        <li>{{ exercise.name }} · {{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps{% if exercise.target_weight_lb is not none %} · {{ exercise.target_weight_lb }} lb target{% endif %}</li>
         {% endfor %}
       </ol>
       <div class="workspace-actions card-actions">
-        <form class="inline-action" method="post" action="{{ url_for('planning.copy_template', template_id=template.id) }}">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit">Create plan from template</button>
-        </form>
         <a class="button workspace-secondary" href="{{ url_for('planning.index', template_id=template.id) }}">Edit template</a>
         <a class="button workspace-secondary" href="{{ url_for('planning.delete_item', collection='templates', item_id=template.id) }}">Delete template</a>
       </div>

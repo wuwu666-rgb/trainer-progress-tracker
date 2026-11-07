@@ -3,26 +3,43 @@
 {% block content %}
 <div class="workspace-page workspace-form-page">
 <p><a href="{{ url_for('planning.index') }}">Back to workout plans</a></p>
-<div class="workspace-heading"><h1>Create a workout plan from scratch</h1></div>
+<div class="workspace-heading"><h1>Create plan</h1></div>
+{% if templates %}
+<details class="template-editor">
+  <summary>Use a saved template</summary>
+  <form method="post" action="{{ url_for('planning.copy_template') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div>
+      <label for="plan-template">Template</label>
+      <select id="plan-template" name="template_id" class="role-select" required>
+        <option value="">Choose a template</option>
+        {% for template in templates %}
+        <option value="{{ template.id }}">{{ template.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit">Create plan from template</button>
+  </form>
+</details>
+{% endif %}
+<h2 class="workspace-section-title">Start from scratch</h2>
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
-{% if clients %}
 <form method="post" class="template-form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  {% include "client_picker.html" %}
+  <p>Save this plan for later, or select a linked client to assign it now.</p>
+  {% if clients %}
+  {% with client_optional=true %}{% include "client_picker.html" %}{% endwith %}
+  {% endif %}
   <label>Plan name <input name="name" value="{{ name }}" required></label>
   <div id="exercise-list">
-    {% for exercise, sets, reps in rows %}
-    {{ exercise_fields(exercise, sets, reps) }}
+    {% for exercise, sets, reps, weight in rows %}
+    {{ exercise_fields(exercise, sets, reps, weight) }}
     {% endfor %}
   </div>
   <button type="button" id="add-exercise">Add exercise</button>
-  <button type="submit">Save and assign plan</button>
+  <button type="submit">Save plan</button>
 </form>
 <template id="exercise-fields">{{ exercise_fields() }}</template>
 <script src="{{ url_for('static', filename='planning.js') }}" defer></script>
-{% else %}
-<p>Connect a client account before creating a custom workout plan.</p>
-<a href="{{ url_for('clients.index') }}">Go to clients</a>
-{% endif %}
 </div>
 {% endblock %}

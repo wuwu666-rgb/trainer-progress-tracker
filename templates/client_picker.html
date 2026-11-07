@@ -1,7 +1,7 @@
 <div>
-  <label for="plan-client">Client</label>
-  <select id="plan-client" name="profile_id" class="role-select" required>
-    <option value="">Select a linked client</option>
+  <label for="plan-client">Client{% if client_optional %} (optional){% endif %}</label>
+  <select id="plan-client" name="profile_id" class="role-select"{% if not client_optional %} required{% endif %}>
+    <option value="">{{ 'Leave unassigned' if client_optional else 'Select a linked client' }}</option>
     {% for client in clients %}
     <option value="{{ client.id }}"{% if request.form.get('profile_id') == client.id|string %} selected{% endif %}>{{ client.name }}</option>
     {% endfor %}

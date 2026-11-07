@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS template_exercises (
     name TEXT NOT NULL,
     target_sets INTEGER NOT NULL CHECK (target_sets > 0),
     target_reps INTEGER NOT NULL CHECK (target_reps > 0),
+    target_weight_lb TEXT,
     PRIMARY KEY (template_id, position)
 );
 
@@ -73,5 +74,6 @@ CREATE TABLE IF NOT EXISTS plan_exercises (
     name TEXT NOT NULL,
     target_sets INTEGER NOT NULL CHECK (target_sets > 0),
     target_reps INTEGER NOT NULL CHECK (target_reps > 0),
+    target_weight_lb TEXT,
     PRIMARY KEY (plan_id, position)
 );
