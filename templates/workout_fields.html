@@ -15,7 +15,7 @@
 </div>
 {% endmacro %}
 
-{% macro exercise_fields(exercise, number, expanded=false, edit_exercise=true) %}
+{% macro exercise_fields(exercise, number, expanded=false, edit_exercise=true, correct_name=false) %}
 {% set key = exercise.key %}
 <details class="workout-exercise" name="workout-exercises"{% if expanded %} open{% endif %} data-workout-exercise="{{ key }}" data-unit="{{ exercise.unit }}">
   <summary>
@@ -30,17 +30,20 @@
   </summary>
   <div class="workout-exercise-body">
     <input type="hidden" name="exercise_key" value="{{ key }}">
-    {% if edit_exercise and exercise.target_sets is none %}
-    <div class="record-result-fields">
+    {% set edit_unit = edit_exercise and exercise.target_sets is none %}
+    {% if correct_name or edit_unit %}
+    <div{% if edit_unit %} class="record-result-fields"{% endif %}>
       <label>Exercise name
-        <input name="name_{{ key }}" maxlength="120" value="{{ exercise.name }}" placeholder="e.g. Squat" data-exercise-name>
+        <input name="name_{{ key }}"{% if exercise.target_sets is none %} maxlength="120"{% endif %}{% if correct_name and exercise.target_sets is not none %} required{% endif %} value="{{ exercise.name }}" placeholder="e.g. Squat" data-exercise-name>
       </label>
+      {% if edit_unit %}
       <label>Measure in
         <select name="unit_{{ key }}" class="role-select" data-set-unit>
           <option value="reps"{% if exercise.unit == 'reps' %} selected{% endif %}>Reps</option>
           <option value="minutes"{% if exercise.unit == 'minutes' %} selected{% endif %}>Minutes</option>
         </select>
       </label>
+      {% endif %}
     </div>
     {% endif %}
     <p class="workout-actual-label">Actual results</p>

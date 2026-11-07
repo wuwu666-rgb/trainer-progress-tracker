@@ -29,7 +29,7 @@
     {{ tab('Plans', 'planning.index', request.blueprint == 'planning') }}
     {% else %}
     {{ tab('Workouts', 'dashboard', dashboard_page == 'workouts' or request.endpoint in ('planning.plan_detail', 'workout_sessions.record'), 'workouts') }}
-    {{ tab('Progress', 'dashboard', dashboard_page == 'progress' or request.blueprint == 'history' or request.endpoint == 'workout_sessions.detail', 'progress') }}
+    {{ tab('Progress', 'dashboard', dashboard_page == 'progress' or request.blueprint == 'history' or request.endpoint in ('workout_sessions.detail', 'workout_sessions.edit'), 'progress') }}
     {% endif %}
     {{ tab('Account', 'dashboard', dashboard_page == 'account', 'account') }}
   </div>

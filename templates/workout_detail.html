@@ -14,6 +14,11 @@
     <p class="overview-kicker">Workout complete</p>
     <h1>{{ workout.plan_name or 'Workout' }}</h1>
     <p>{{ client.name }} · <time datetime="{{ workout.workout_date }}">{{ workout.workout_date }}</time></p>
+    {% if workout.recorder_id == g.user.id %}
+    <div class="workspace-actions">
+      <a class="button workspace-secondary" href="{{ url_for('workout_sessions.edit', workout_id=workout.id, q=request.args.get('q') or none) }}">Edit workout</a>
+    </div>
+    {% endif %}
   </div>
   <div class="workspace-list">
     {% for exercise in exercises %}
