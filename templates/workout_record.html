@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "workout_fields.html" import exercise_fields, set_fields %}
+{% block content %}
+{% set trainer = g.user.role == 'trainer' %}
+<div class="workspace-page workout-page">
+  <div class="workspace-actions workspace-back">
+    {% if trainer %}
+    <a class="button workspace-secondary" href="{{ url_for('workout_sessions.start_trainer', client_id=client.id, q=request.args.get('q') or none) }}">← Back to training</a>
+    {% else %}
+    <a class="button workspace-secondary" href="{{ url_for('dashboard', page='workouts') }}">← My workouts</a>
+    {% endif %}
+  </div>
+  <div class="record-heading workout-title">
+    <div>
+      <h1>Record workout</h1>
+      {% if trainer %}<p>{{ client.name }}</p>{% endif %}
+      {% if workout.plan_name %}<p>Plan · {{ workout.plan_name }}</p>{% endif %}
+    </div>
+  </div>
+
+  <p>Enter what you did in each set. Weight is optional.</p>
+  {% if error %}<p class="workout-notice" role="alert" tabindex="-1" data-workout-error>{{ error }}</p>{% endif %}
+  {% if conflict %}
+  <a href="{{ url_for('workout_sessions.record', workout_id=workout.id, q=request.args.get('q') or none) }}">Reopen saved workout</a>
+  {% elif request.args.get('saved') == '1' and not error %}
+  <p class="workout-notice" role="status">Draft saved. You can come back to it later.</p>
+  {% endif %}
+
+  <form method="post" class="workout-editor" id="workout-editor">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="revision" value="{{ revision }}">
+    {% if trainer %}
+    <details class="record-extra workout-date"{% if workout_date != today %} open{% endif %}>
+      <summary>Workout date <span>{{ 'Today' if workout_date == today else workout_date }}</span></summary>
+      <label>Date
+        <input type="date" name="workout_date" required max="{{ today }}" value="{{ workout_date }}">
+      </label>
+    </details>
+    {% endif %}
+    <div class="workout-exercises" id="workout-exercises">
+      {% for exercise in exercises %}
+      {{ exercise_fields(exercise, loop.index, loop.first) }}
+      {% endfor %}
+    </div>
+    <button class="workspace-secondary" type="button" id="workout-add-exercise">{{ '+ Add extra exercise' if workout.plan_name else '+ Add exercise' }}</button>
+    <div class="workout-save-actions">
+      <p>Save the workout to add the sets you entered to training history.</p>
+      <button class="workspace-secondary" type="submit" name="action" value="save">Save draft</button>
+      <button type="submit" name="action" value="complete">Save workout</button>
+    </div>
+  </form>
+
+  <form method="post" class="inline-action workout-discard" id="workout-discard">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="revision" value="{{ revision }}">
+    <button class="workout-text-button" type="submit" name="action" value="discard">Discard draft</button>
+  </form>
+</div>
+<template id="workout-new-exercise">{{ exercise_fields(blank_exercise, 1) }}</template>
+<template id="workout-new-set">{{ set_fields('__KEY__', 'reps', 1) }}</template>
+<script src="{{ url_for('static', filename='workout.js') }}" defer></script>
+{% endblock %}
