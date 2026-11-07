@@ -14,6 +14,7 @@ from clients import bp as clients, get_linked_profile
 from planning import bp as planning, get_assigned_plans
 from sessions import bp as sessions
 from history import bp as history, get_workouts
+from workout_sessions import bp as workout_sessions
 
 app = Flask(__name__)
 app.config["DATABASE"] = Path(__file__).with_name("trainer.sqlite3")
@@ -24,7 +25,7 @@ app.config.update(
 )
 app.jinja_env.globals["csrf_token"] = csrf_token
 
-for blueprint in (auth, clients, planning, sessions, history):
+for blueprint in (auth, clients, planning, sessions, history, workout_sessions):
     app.register_blueprint(blueprint)
 
 
@@ -34,14 +35,14 @@ def open_database():
     g.db.row_factory = sqlite3.Row
     g.db.execute("PRAGMA foreign_keys = ON")
     load_user()
-    if request.blueprint in ("clients", "planning", "sessions", "history"):
+    if request.blueprint in ("clients", "planning", "sessions", "history", "workout_sessions"):
         if g.user is None:
             return redirect(url_for("auth.login"))
         if request.endpoint in ("clients.invitations", "clients.respond"):
             if g.user["role"] != "client":
                 abort(403)
         elif g.user["role"] != "trainer" and not (
-            request.blueprint == "history"
+            request.blueprint in ("history", "workout_sessions")
             or (request.endpoint == "planning.plan_detail" and request.method in ("GET", "HEAD"))
         ):
             abort(403)
@@ -64,8 +65,9 @@ def home():
         if profile:
             record_count = g.db.execute(
                 "SELECT (SELECT COUNT(*) FROM workouts WHERE client_id = ?) + "
-                "(SELECT COUNT(*) FROM cardio_workouts WHERE client_id = ?)",
-                (profile["id"], profile["id"]),
+                "(SELECT COUNT(*) FROM cardio_workouts WHERE client_id = ?) + "
+                "(SELECT COUNT(*) FROM workout_sessions WHERE client_id = ? AND completed_at IS NOT NULL)",
+                (profile["id"], profile["id"], profile["id"]),
             ).fetchone()[0]
         return render_template(
             "client_home.html", profile=profile, plans=get_assigned_plans(),

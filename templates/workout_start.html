@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="workspace-page workout-page">
+  <div class="workspace-actions workspace-back">
+    <a class="button workspace-secondary" href="{{ url_for('clients.index', focus=client.id, q=request.args.get('q') or none, _anchor='client-' ~ client.id) }}">← Back to clients</a>
+  </div>
+  <div class="workspace-heading">
+    <h1>Record workout</h1>
+    <p>{{ client.name }}</p>
+  </div>
+
+  {% set blank_draft = drafts|selectattr('plan_name', 'none')|first %}
+  {% set planned_drafts = drafts|rejectattr('plan_name', 'none')|list %}
+  <div class="workout-start-actions">
+    <form class="inline-action workout-start-form" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">{{ 'Continue blank workout' if blank_draft else 'Start blank workout' }}</button>
+    </form>
+    <details class="workout-plan-options" data-available-plans="{{ url_for('workout_sessions.available_plans', client_id=client.id) }}">
+      <summary>Start from a plan</summary>
+      <form class="workout-start-form" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+          <label for="workout-plan">Workout plan</label>
+          <select class="role-select" id="workout-plan" name="plan_id" required>
+            <option value="">{{ 'Choose a plan' if plans else 'No plans available' }}</option>
+            {% for plan in plans %}
+            <option value="{{ plan.id }}"{% if plan.in_progress %} data-in-progress{% endif %}>{{ plan.name }}{{ ' (draft)' if plan.in_progress else '' }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <p role="status" data-plan-status hidden></p>
+        <button type="submit"{% if not plans %} disabled{% endif %}>Record this workout</button>
+      </form>
+    </details>
+  </div>
+  {% if planned_drafts %}
+  <details class="workout-plan-options">
+    <summary>Saved drafts ({{ planned_drafts|length }})</summary>
+    <div class="workspace-list workout-draft-list">
+      {% for draft in planned_drafts %}
+      <a class="workspace-card workspace-row-link" href="{{ url_for('workout_sessions.record', workout_id=draft.id, q=request.args.get('q') or none) }}">
+        <span>{{ draft.plan_name }} · {{ draft.workout_date }}</span>
+        <span>Continue ›</span>
+      </a>
+      {% endfor %}
+    </div>
+  </details>
+  {% endif %}
+</div>
+<script src="{{ url_for('static', filename='workout_start.js') }}" defer></script>
+{% endblock %}

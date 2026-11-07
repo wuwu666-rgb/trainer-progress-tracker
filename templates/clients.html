@@ -33,7 +33,7 @@
       </div>
       {% if client.goals %}<p class="workspace-goals">{{ client.goals }}</p>{% endif %}
       <div class="workspace-actions card-actions">
-        <a class="button" href="{{ url_for('sessions.record', client_id=client.id, q=query or none) }}">Record training</a>
+        <a class="button" href="{{ url_for('workout_sessions.start_trainer', client_id=client.id, q=query or none) }}">Record workout</a>
         <a class="button workspace-secondary" href="{{ url_for('history.index', client_id=client.id, q=query or none) }}">View history</a>
         <a class="button workspace-secondary" href="{{ url_for('clients.edit', client_id=client.id, q=query or none) }}">Edit profile</a>
       </div>

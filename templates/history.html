@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "workout_summary.html" import workout_summary %}
+{% from "workout_summary.html" import recorded_set, workout_summary %}
 {% block content %}
 {% if dashboard_page != "progress" %}
 <div class="workspace-actions workspace-back">
@@ -21,16 +21,34 @@
 <p><a class="button" href="{{ url_for('clients.invitations') }}">Trainer invitations</a></p>
 {% endif %}
 {% if g.user.role == "trainer" %}
-<a class="button" href="{{ url_for('sessions.record', client_id=client.id, q=request.args.get('q') or none) }}">Record another workout</a>
+<a class="button" href="{{ url_for('workout_sessions.start_trainer', client_id=client.id, q=request.args.get('q') or none) }}">Record another workout</a>
 {% endif %}
 {% for workout in workouts %}
 <section>
-  <h2>{{ workout.exercise }}</h2>
+  <div class="workspace-card-heading history-card-heading">
+    <h2>{{ (workout.plan_name or 'Workout') if workout.grouped else workout.exercise }}</h2>
+    <span class="workspace-status">
+      {% if workout.recorder_name %}
+      {{ 'Self-recorded' if workout.recorder_role == 'client' else 'Trainer recorded' }} · {{ workout.recorder_name }}
+      {% else %}
+      Unknown recorder
+      {% endif %}
+    </span>
+  </div>
+  {% if workout.grouped %}
+  <p>{{ workout.workout_date }} · {{ workout.exercise_count }} {{ 'exercise' if workout.exercise_count == 1 else 'exercises' }} · {{ workout.set_count }} {{ 'set' if workout.set_count == 1 else 'sets' }}</p>
+  <p><strong>{{ workout.preview_exercise }}</strong> · {% if workout.set_count > 1 %}Set 1 · {% endif %}{{ recorded_set(workout.preview_result, workout.preview_weight, workout.preview_unit) }}</p>
+  <a class="button workspace-secondary" href="{{ url_for('workout_sessions.detail', workout_id=workout.id, q=request.args.get('q') or none) }}">View workout</a>
+  {% if g.user.role == "trainer" and workout.recorder_id == g.user.id %}
+  <a class="button workspace-secondary" href="{{ url_for('history.delete_record', client_id=client.id, kind='session', record_id=workout.id, q=request.args.get('q') or none) }}">Delete workout</a>
+  {% endif %}
+  {% else %}
   {{ workout_summary(workout) }}
   {% if g.user.role == "trainer" %}
   <div class="workspace-actions card-actions">
     <a class="button workspace-secondary" href="{{ url_for('history.delete_record', client_id=client.id, kind='strength' if workout.duration_min is none else 'timed', record_id=workout.id, q=request.args.get('q') or none) }}">Delete record</a>
   </div>
+  {% endif %}
   {% endif %}
 </section>
 {% else %}
