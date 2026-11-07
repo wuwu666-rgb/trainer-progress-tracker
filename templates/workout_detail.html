@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "workout_summary.html" import recorded_set %}
+{% block content %}
+{% set trainer = g.user.role == 'trainer' %}
+<div class="workspace-page workout-page">
+  <div class="workspace-actions workspace-back">
+    {% if trainer %}
+    <a class="button workspace-secondary" href="{{ url_for('history.index', client_id=client.id, q=request.args.get('q') or none) }}">View training history</a>
+    {% else %}
+    <a class="button workspace-secondary" href="{{ url_for('dashboard', page='progress') }}">← Progress</a>
+    {% endif %}
+  </div>
+  <div class="workspace-heading">
+    <p class="overview-kicker">Workout complete</p>
+    <h1>{{ workout.plan_name or 'Workout' }}</h1>
+    <p>{{ client.name }} · <time datetime="{{ workout.workout_date }}">{{ workout.workout_date }}</time></p>
+  </div>
+  <div class="workspace-list">
+    {% for exercise in exercises %}
+    {% if exercise.sets %}
+    <section class="workspace-card workout-results">
+      <h2>{{ exercise.name }}</h2>
+      <ol>
+        {% for result, weight in exercise.sets %}
+        <li>
+          <span>Set {{ loop.index }}</span>
+          <strong>{{ recorded_set(result, weight, exercise.unit) }}</strong>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+    {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

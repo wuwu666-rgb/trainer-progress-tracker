@@ -9,6 +9,16 @@
 <div class="workspace-heading"><h1>{{ plan.name }}</h1></div>
 {% if g.user.role == "trainer" %}
 <p class="badge">{{ 'Assigned to ' ~ plan.client_name if plan.client_name else 'Unassigned workout plan' }}</p>
+{% if plan.profile_id is none %}
+<p>To use this plan during a session, open a client’s <strong>Record workout</strong> page and choose <strong>Start from a plan</strong>.</p>
+{% endif %}
+{% endif %}
+{% if g.user.role == "client" or plan.profile_id is not none %}
+<form class="inline-action workspace-actions" method="post" action="{{ url_for('workout_sessions.start_client', plan_id=plan.id) if g.user.role == 'client' else url_for('workout_sessions.start_trainer', client_id=plan.profile_id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if g.user.role == "trainer" %}<input type="hidden" name="plan_id" value="{{ plan.id }}">{% endif %}
+  <button type="submit">{{ 'Continue workout' if in_progress else 'Start workout' if g.user.role == 'client' else 'Record this workout' }}</button>
+</form>
 {% endif %}
 <section class="saved-template">
   <h2>Planned exercises</h2>
@@ -26,7 +36,7 @@
 </div>
 <h2>Assign to client</h2>
 {% if clients %}
-<p>The client can view this plan in Workouts.</p>
+<p>The client can open this plan in Workouts and record their own session.</p>
 <form method="post">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   {% include "client_picker.html" %}

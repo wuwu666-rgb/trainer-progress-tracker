@@ -5,3 +5,7 @@
   <p>{{ workout.workout_date }} · {% if workout.set_count > 1 %}{{ workout.set_count }} sets × {% endif %}{{ workout.reps }} reps{% if not workout.no_added_weight %} · {{ workout.weight_lb }} lb added{% endif %}</p>
   {% endif %}
 {% endmacro %}
+
+{% macro recorded_set(result, weight, unit) -%}
+{{ result }} {{ 'min' if unit == 'minutes' else 'reps' }}{% if weight %} · {{ weight }} lb{% endif %}
+{%- endmacro %}

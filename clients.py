@@ -121,6 +121,7 @@ def delete(client_id):
         "client_user_id IS NULL "
         "AND NOT EXISTS (SELECT 1 FROM workouts WHERE client_id = clients.id) "
         "AND NOT EXISTS (SELECT 1 FROM cardio_workouts WHERE client_id = clients.id) "
+        "AND NOT EXISTS (SELECT 1 FROM workout_sessions WHERE client_id = clients.id) "
         "AND NOT EXISTS (SELECT 1 FROM client_invitations WHERE client_id = clients.id) "
         "AND NOT EXISTS (SELECT 1 FROM plans WHERE profile_id = clients.id)"
     )

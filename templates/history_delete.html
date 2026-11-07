@@ -3,14 +3,20 @@
 {% block content %}
 <div class="workspace-page workspace-form-page">
   <div class="workspace-heading">
-    <h1>Delete training record</h1>
+    <h1>{{ 'Delete workout' if grouped else 'Delete training record' }}</h1>
     <p>{{ client.name }}</p>
   </div>
   <form method="post">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if grouped %}
+    <strong>{{ workout.plan_name or 'Workout' }}</strong>
+    <p>{{ workout.workout_date }}</p>
+    <p>This workout and all its sets will be permanently removed from training history.</p>
+    {% else %}
     <strong>{{ workout.exercise }}</strong>
     {{ workout_summary(workout) }}
     <p>This record will be permanently removed from training history.</p>
+    {% endif %}
     <button type="submit">Confirm deletion</button>
   </form>
   <div class="workspace-actions">
