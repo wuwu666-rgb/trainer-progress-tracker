@@ -148,18 +148,20 @@ def blank_exercise(key="new-0"):
     }
 
 
-def read_exercises(saved):
+def read_exercises(saved, trainer):
     keys = request.form.getlist("exercise_key")
     planned_keys = [key for key, exercise in saved.items() if exercise["target_sets"] is not None]
     if (len(keys) != len(set(keys))
             or [key for key in keys if key in planned_keys] != planned_keys):
         abort(400)
+    if not trainer and keys != list(saved):
+        abort(400, description="Record results for the exercises already in this workout.")
     exercises = []
     for key in keys:
         if key not in saved and not (key.startswith("new-") and key[4:].isascii() and key[4:].isdigit()):
             abort(400)
         exercise = dict(saved[key]) if key in saved else blank_exercise(key)
-        if exercise["target_sets"] is None:
+        if trainer and exercise["target_sets"] is None:
             exercise["name"] = request.form.get(f"name_{key}", "").strip()
             exercise["unit"] = request.form.get(f"unit_{key}", "")
         exercise["sets"] = list(zip_longest(
@@ -297,7 +299,7 @@ def record(workout_id):
             error = "This draft changed in another tab. Reopen the saved workout to continue."
             status = 409
         else:
-            exercises = read_exercises(saved)
+            exercises = read_exercises(saved, trainer)
             if trainer:
                 workout_date = request.form.get("workout_date", "")
             complete = action == "complete"
@@ -329,7 +331,8 @@ def record(workout_id):
 
     return render_template(
         "workout_record.html", workout=workout, client=client,
-        exercises=exercises or [blank_exercise()], blank_exercise=blank_exercise("__KEY__"),
+        exercises=exercises or ([blank_exercise()] if trainer else []),
+        blank_exercise=blank_exercise("__KEY__"),
         revision=revision, workout_date=workout_date, today=today, error=error, conflict=status == 409,
     ), status
 

@@ -28,7 +28,7 @@ function updateExercises() {
 function updateSets(exercise) {
   const unit = exercise.querySelector("[data-set-unit]");
   if (unit) unit.dataset.lastUnit = unit.value;
-  const timed = unit?.value === "minutes";
+  const timed = (unit?.value ?? exercise.dataset.unit) === "minutes";
   exercise.querySelectorAll("[data-workout-set]").forEach((set, index) => {
     const number = index + 1;
     const result = set.querySelector("[data-set-result]");

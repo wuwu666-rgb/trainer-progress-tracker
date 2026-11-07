@@ -15,9 +15,9 @@
 </div>
 {% endmacro %}
 
-{% macro exercise_fields(exercise, number, expanded=false) %}
+{% macro exercise_fields(exercise, number, expanded=false, edit_exercise=true) %}
 {% set key = exercise.key %}
-<details class="workout-exercise" name="workout-exercises"{% if expanded %} open{% endif %} data-workout-exercise="{{ key }}">
+<details class="workout-exercise" name="workout-exercises"{% if expanded %} open{% endif %} data-workout-exercise="{{ key }}" data-unit="{{ exercise.unit }}">
   <summary>
     <span data-exercise-title>{{ exercise.name or 'Exercise ' ~ number }}</span>
     <span class="workout-target">
@@ -30,7 +30,7 @@
   </summary>
   <div class="workout-exercise-body">
     <input type="hidden" name="exercise_key" value="{{ key }}">
-    {% if exercise.target_sets is none %}
+    {% if edit_exercise and exercise.target_sets is none %}
     <div class="record-result-fields">
       <label>Exercise name
         <input name="name_{{ key }}" maxlength="120" value="{{ exercise.name }}" placeholder="e.g. Squat" data-exercise-name>
@@ -50,7 +50,7 @@
       {% endfor %}
     </div>
     <button class="workspace-secondary" type="button" data-add-set>+ Add set</button>
-    {% if exercise.target_sets is none %}
+    {% if edit_exercise and exercise.target_sets is none %}
     <button class="workout-text-button workout-remove-exercise" type="button" data-remove-exercise>Remove exercise</button>
     {% endif %}
   </div>
