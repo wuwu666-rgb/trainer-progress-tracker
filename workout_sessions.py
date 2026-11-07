@@ -7,6 +7,7 @@ from flask import Blueprint, abort, g, redirect, render_template, request, url_f
 from auth import check_csrf
 from clients import get_visible_client
 from planning import get_plan_exercises, get_visible_plan
+from training_dates import today_in_new_york
 
 bp = Blueprint("workout_sessions", __name__)
 
@@ -33,7 +34,7 @@ def start_workout(client, plan=None):
     workout_id = g.db.execute(
         "INSERT INTO workout_sessions (client_id, recorder_id, source_plan_id, plan_name, workout_date) "
         "VALUES (?, ?, ?, ?, ?)",
-        (client["id"], g.user["id"], plan_id, plan["name"] if plan else None, date.today().isoformat()),
+        (client["id"], g.user["id"], plan_id, plan["name"] if plan else None, today_in_new_york().isoformat()),
     ).lastrowid
     if plan:
         g.db.executemany(
@@ -112,6 +113,8 @@ def start_client(plan_id):
 
 
 def get_workout(workout_id):
+    if not 0 < workout_id < 2**63:
+        abort(404)
     workout = g.db.execute(
         "SELECT * FROM workout_sessions WHERE id = ?", (workout_id,),
     ).fetchone()
@@ -148,7 +151,7 @@ def blank_exercise(key="new-0"):
     }
 
 
-def read_exercises(saved, trainer):
+def read_exercises(saved, trainer, editing):
     keys = request.form.getlist("exercise_key")
     planned_keys = [key for key, exercise in saved.items() if exercise["target_sets"] is not None]
     if (len(keys) != len(set(keys))
@@ -161,8 +164,9 @@ def read_exercises(saved, trainer):
         if key not in saved and not (key.startswith("new-") and key[4:].isascii() and key[4:].isdigit()):
             abort(400)
         exercise = dict(saved[key]) if key in saved else blank_exercise(key)
-        if trainer and exercise["target_sets"] is None:
+        if editing or (trainer and exercise["target_sets"] is None):
             exercise["name"] = request.form.get(f"name_{key}", "").strip()
+        if trainer and exercise["target_sets"] is None:
             exercise["unit"] = request.form.get(f"unit_{key}", "")
         exercise["sets"] = list(zip_longest(
             request.form.getlist(f"result_{key}"), request.form.getlist(f"weight_{key}"),
@@ -198,10 +202,13 @@ def validated_exercises(exercises, complete):
         label = exercise["name"] or f"Exercise {position}"
         if exercise["unit"] not in ("reps", "minutes"):
             raise ValueError(f"{label}: choose reps or minutes.")
+        if exercise["target_sets"] is not None and not exercise["name"]:
+            raise ValueError(f"Enter a name for exercise {position}.")
         if exercise["target_sets"] is None and len(exercise["name"]) > 120:
             raise ValueError(f"Exercise {position}: use a name of 120 characters or fewer.")
         sets = []
         for number, (result, weight) in enumerate(exercise["sets"], 1):
+            entered_weight = exercise["unit"] == "reps" and bool(weight.strip())
             try:
                 result, weight = parse_set(result, weight, exercise["unit"])
             except (ValueError, InvalidOperation):
@@ -210,7 +217,7 @@ def validated_exercises(exercises, complete):
                     metric = "a positive duration in minutes"
                 raise ValueError(f"{label}, set {number}: enter {metric}.") from None
             if complete:
-                if result is None and weight is not None:
+                if result is None and entered_weight:
                     raise ValueError(f"{label}, set {number}: enter reps or clear the weight.")
                 if result is None:
                     continue
@@ -224,13 +231,13 @@ def validated_exercises(exercises, complete):
     return parsed
 
 
-def save_workout(workout_id, revision, workout_date, exercises, complete):
-    # Lock the draft revision before replacing its exercises and sets.
+def save_workout(workout_id, revision, workout_date, exercises, complete, editing):
+    # Reserve the current revision before replacing any results.
     updated = g.db.execute(
         "UPDATE workout_sessions SET workout_date = ?, revision = revision + 1, "
-        "completed_at = CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE NULL END "
-        "WHERE id = ? AND revision = ? AND recorder_id = ? AND completed_at IS NULL",
-        (workout_date, complete, workout_id, revision, g.user["id"]),
+        "completed_at = CASE WHEN ? THEN COALESCE(completed_at, CURRENT_TIMESTAMP) ELSE NULL END "
+        "WHERE id = ? AND revision = ? AND recorder_id = ? AND (completed_at IS NOT NULL) = ?",
+        (workout_date, complete, workout_id, revision, g.user["id"], editing),
     )
     if not updated.rowcount:
         return False
@@ -257,7 +264,8 @@ def detail_url(workout_id):
 
 
 @bp.route("/workouts/<int:workout_id>/record", methods=["GET", "POST"])
-def record(workout_id):
+@bp.route("/workouts/<int:workout_id>/edit", methods=["GET", "POST"], endpoint="edit", defaults={"editing": True})
+def record(workout_id, editing=False):
     with g.db:
         g.db.execute("BEGIN")
         workout, client = get_workout(workout_id)
@@ -265,12 +273,14 @@ def record(workout_id):
             abort(404)
         if request.method == "POST":
             check_csrf()
-        if workout["completed_at"]:
+        if editing and not workout["completed_at"]:
+            abort(404)
+        if not editing and workout["completed_at"]:
             return redirect(detail_url(workout_id))
         saved = get_exercises(workout_id)
 
     trainer = g.user["role"] == "trainer"
-    today = date.today().isoformat()
+    today = today_in_new_york().isoformat()
     exercises = list(saved.values())
     workout_date = workout["workout_date"]
     revision = workout["revision"]
@@ -279,7 +289,8 @@ def record(workout_id):
     if request.method == "POST":
         revision = request.form.get("revision", type=int)
         action = request.form.get("action")
-        if revision is None or not 0 <= revision < 2**63 or action not in ("save", "complete", "discard"):
+        actions = ("correct",) if editing else ("save", "complete", "discard")
+        if revision is None or not 0 <= revision < 2**63 or action not in actions:
             abort(400)
         if action == "discard":
             with g.db:
@@ -296,13 +307,13 @@ def record(workout_id):
             )
 
         if revision != workout["revision"]:
-            error = "This draft changed in another tab. Reopen the saved workout to continue."
+            error = "This workout changed in another tab. Reopen the saved workout to continue."
             status = 409
         else:
-            exercises = read_exercises(saved, trainer)
-            if trainer:
+            exercises = read_exercises(saved, trainer, editing)
+            if trainer or editing:
                 workout_date = request.form.get("workout_date", "")
-            complete = action == "complete"
+            complete = editing or action == "complete"
             try:
                 if date.fromisoformat(workout_date).isoformat() != workout_date or workout_date > today:
                     raise ValueError
@@ -317,20 +328,20 @@ def record(workout_id):
                     status = 400
                 else:
                     with g.db:
-                        updated = save_workout(workout_id, revision, workout_date, parsed, complete)
+                        updated = save_workout(workout_id, revision, workout_date, parsed, complete, editing)
                     if updated:
                         return redirect(detail_url(workout_id) if complete else url_for(
                             "workout_sessions.record", workout_id=workout_id, saved=1,
                             q=request.args.get("q") or None,
                         ))
                     current, _ = get_workout(workout_id)
-                    if current["completed_at"]:
+                    if not editing and current["completed_at"]:
                         return redirect(detail_url(workout_id))
-                    error = "This draft changed in another tab. Reopen the saved workout to continue."
+                    error = "This workout changed in another tab. Reopen the saved workout to continue."
                     status = 409
 
     return render_template(
-        "workout_record.html", workout=workout, client=client,
+        "workout_record.html", workout=workout, client=client, editing=editing,
         exercises=exercises or ([blank_exercise()] if trainer else []),
         blank_exercise=blank_exercise("__KEY__"),
         revision=revision, workout_date=workout_date, today=today, error=error, conflict=status == 409,
