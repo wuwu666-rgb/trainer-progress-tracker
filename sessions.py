@@ -5,6 +5,7 @@ from flask import Blueprint, g, redirect, render_template, request, url_for
 
 from auth import check_csrf
 from clients import get_visible_client
+from training_dates import today_in_new_york
 
 bp = Blueprint("sessions", __name__)
 
@@ -12,7 +13,7 @@ bp = Blueprint("sessions", __name__)
 @bp.route("/clients/<int:client_id>/record", methods=["GET", "POST"])
 def record(client_id):
     client = get_visible_client(client_id)
-    today = date.today()
+    today = today_in_new_york()
     result_unit = request.form.get("result_unit")
     if result_unit is not None:
         exercise_type = {"reps": "strength", "minutes": "cardio"}.get(result_unit)

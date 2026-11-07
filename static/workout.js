@@ -123,7 +123,7 @@ editor.addEventListener("invalid", (event) => {
 editor.addEventListener("submit", () => {
   dirty = false;
 });
-discard.addEventListener("submit", (event) => {
+discard?.addEventListener("submit", (event) => {
   if (window.confirm("Discard this draft and its saved sets?")) {
     dirty = false;
   } else {
