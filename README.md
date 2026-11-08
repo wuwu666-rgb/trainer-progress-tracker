@@ -49,6 +49,8 @@ These public credentials are for local demos with sample data. Each checkout use
 
 The public HTTPS deployment is pending. GitHub hosts the source code, and the link above opens a local development server on your computer.
 
+See [Free HTTPS deployment](DEPLOYMENT.md) for hosting Repbook on PythonAnywhere with persistent SQLite storage and a fresh database on first launch.
+
 The current recorder saves one exercise entry at a time. Full multi-exercise sessions, independent client recording, corrections, and body-weight tracking are still planned. Offline recording, recovery, and synchronization are deferred.
 
 See [Issue #1](https://github.com/wuwu666-rgb/trainer-progress-tracker/issues/1) for task ownership and completion status.
