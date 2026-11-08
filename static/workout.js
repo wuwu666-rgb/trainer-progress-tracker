@@ -123,7 +123,12 @@ editor.addEventListener("invalid", (event) => {
   if (details) details.open = true;
   window.setTimeout(() => { showingInvalid = false; }, 0);
 }, true);
-editor.addEventListener("submit", () => {
+editor.addEventListener("submit", (event) => {
+  if (event.submitter?.hasAttribute("data-confirm-completion") &&
+      !window.confirm("Finish this workout? It will move from My workouts to Progress. Only sets with results will be saved.")) {
+    event.preventDefault();
+    return;
+  }
   dirty = false;
 });
 discard?.addEventListener("submit", (event) => {

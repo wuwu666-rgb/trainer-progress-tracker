@@ -72,9 +72,13 @@
     <button type="submit" name="action" value="correct">Save changes</button>
     {% else %}
     <div class="workout-save-actions">
+      {% if trainer %}
       <p>Save the workout to add the sets you entered to training history.</p>
+      {% else %}
+      <p>Saving completes this workout and moves it to Progress. Choose Save draft if you want to continue later.</p>
+      {% endif %}
       <button class="workspace-secondary" type="submit" name="action" value="save">Save draft</button>
-      <button type="submit" name="action" value="complete">Save workout</button>
+      <button type="submit" name="action" value="complete"{% if not trainer %} data-confirm-completion{% endif %}>Save workout</button>
     </div>
     {% endif %}
   </form>
