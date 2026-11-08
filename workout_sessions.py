@@ -107,6 +107,8 @@ def start_client(plan_id):
     with g.db:
         g.db.execute("BEGIN IMMEDIATE")
         plan = get_visible_plan(plan_id)
+        if plan["completed_workout_id"] is not None:
+            return redirect(detail_url(plan["completed_workout_id"]))
         client = get_visible_client(plan["profile_id"])
         workout_id = start_workout(client, plan)
     return redirect(url_for("workout_sessions.record", workout_id=workout_id))

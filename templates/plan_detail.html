@@ -13,7 +13,10 @@
 <p>To use this plan during a session, open a client’s <strong>Record workout</strong> page and choose <strong>Start from a plan</strong>.</p>
 {% endif %}
 {% endif %}
-{% if g.user.role == "client" or plan.client_name %}
+{% if g.user.role == "client" and plan.completed_workout_id is not none %}
+<p class="badge">Completed</p>
+<a class="button" href="{{ url_for('workout_sessions.detail', workout_id=plan.completed_workout_id) }}">View completed workout</a>
+{% elif g.user.role == "client" or plan.client_name %}
 <form class="inline-action workspace-actions" method="post" action="{{ url_for('workout_sessions.start_client', plan_id=plan.id) if g.user.role == 'client' else url_for('workout_sessions.start_trainer', client_id=plan.profile_id) }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   {% if g.user.role == "trainer" %}<input type="hidden" name="plan_id" value="{{ plan.id }}">{% endif %}

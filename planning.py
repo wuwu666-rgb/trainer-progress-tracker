@@ -256,13 +256,19 @@ def plan_for_client(client_id):
     ), 400 if error else 200
 
 
+CLIENT_PLAN_SESSIONS = (
+    "FROM workout_sessions AS w WHERE w.source_plan_id = p.id "
+    "AND w.client_id = c.id AND w.recorder_id = c.client_user_id "
+)
+
+
 def get_assigned_plans():
     return g.db.execute(
-        "SELECT p.id, p.name, EXISTS (SELECT 1 FROM workout_sessions AS w "
-        "WHERE w.source_plan_id = p.id AND w.recorder_id = c.client_user_id "
-        "AND w.client_id = c.id AND w.completed_at IS NULL) AS in_progress FROM plans AS p "
+        f"SELECT p.id, p.name, EXISTS (SELECT 1 {CLIENT_PLAN_SESSIONS}"
+        "AND w.completed_at IS NULL) AS in_progress FROM plans AS p "
         "JOIN clients AS c ON c.id = p.profile_id AND c.trainer_id = p.trainer_id "
-        "WHERE c.client_user_id = ? ORDER BY p.id DESC",
+        f"WHERE c.client_user_id = ? AND NOT EXISTS (SELECT 1 {CLIENT_PLAN_SESSIONS}"
+        "AND w.completed_at IS NOT NULL) ORDER BY p.id DESC",
         (g.user["id"],),
     ).fetchall()
 
@@ -270,7 +276,9 @@ def get_assigned_plans():
 def get_visible_plan(plan_id):
     access = "p.trainer_id" if g.user["role"] == "trainer" else "c.client_user_id"
     plan = g.db.execute(
-        "SELECT p.id, p.name, p.profile_id, c.name AS client_name FROM plans AS p "
+        "SELECT p.id, p.name, p.profile_id, c.name AS client_name, "
+        f"(SELECT w.id {CLIENT_PLAN_SESSIONS}AND w.completed_at IS NOT NULL "
+        "ORDER BY w.id DESC LIMIT 1) AS completed_workout_id FROM plans AS p "
         "LEFT JOIN clients AS c ON c.id = p.profile_id AND c.trainer_id = p.trainer_id "
         f"WHERE p.id = ? AND {access} = ?",
         (plan_id, g.user["id"]),

@@ -18,9 +18,9 @@
     <a class="workspace-card workspace-row-link" href="{{ url_for('planning.plan_detail', plan_id=plan.id) }}">{{ plan.name }} <span aria-hidden="true">›</span></a>
     {% else %}
     <div class="overview-empty">
-      <h3>No workout plans yet</h3>
+      <h3>No workouts to do right now</h3>
       {% if profile %}
-      <p>Your trainer’s assigned workouts will appear here.</p>
+      <p>New assignments will appear here. <a href="{{ url_for('dashboard', page='progress') }}">View completed workouts</a>.</p>
       {% else %}
       <p>Connect with a trainer to receive your first workout.</p>
       <a class="button" href="{{ url_for('clients.invitations') }}">Open invitations</a>

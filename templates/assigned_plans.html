@@ -17,9 +17,9 @@
       {% if plan.in_progress %}<span class="workspace-status is-connected">In progress</span>{% else %}<span aria-hidden="true">›</span>{% endif %}
     </a>
     {% else %}
-    <p class="workspace-empty">No workouts have been assigned to you yet.</p>
+    <p class="workspace-empty">No workouts to do right now.</p>
     {% endfor %}
   </div>
-  {% if profile %}<p class="client-result-count">Completed training records appear under Progress.</p>{% endif %}
+  <p><a class="button workspace-secondary" href="{{ url_for('dashboard', page='progress') }}">View completed workouts</a></p>
 </div>
 {% endblock %}
