@@ -17,12 +17,12 @@
 
 {% macro exercise_fields(exercise, number, expanded=false, edit_exercise=true, correct_name=false) %}
 {% set key = exercise.key %}
-<details class="workout-exercise" name="workout-exercises"{% if expanded %} open{% endif %} data-workout-exercise="{{ key }}" data-unit="{{ exercise.unit }}">
+<details class="workout-exercise" name="workout-exercises"{% if expanded %} open{% endif %} data-workout-exercise="{{ key }}" data-unit="{{ exercise.unit }}"{% if exercise.target_sets is not none %} data-target-sets="{{ exercise.target_sets }}"{% endif %}>
   <summary>
     <span data-exercise-title>{{ exercise.name or 'Exercise ' ~ number }}</span>
     <span class="workout-target">
       {% if exercise.target_sets is not none %}
-      <span>Planned: {{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps{% if exercise.target_weight_lb is not none %} · {{ exercise.target_weight_lb }} lb{% endif %}</span>
+      <span data-exercise-target>Planned: {{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps{% if exercise.target_weight_lb is not none %} · {{ exercise.target_weight_lb }} lb{% endif %}</span>
       {% endif %}
       {% set entered = exercise.sets|selectattr('0')|list|length %}
       <span data-set-progress{% if not entered %} hidden{% endif %}>{{ entered }} {{ 'set' if entered == 1 else 'sets' }} entered</span>

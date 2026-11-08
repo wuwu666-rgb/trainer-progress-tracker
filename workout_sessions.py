@@ -107,6 +107,8 @@ def start_client(plan_id):
     with g.db:
         g.db.execute("BEGIN IMMEDIATE")
         plan = get_visible_plan(plan_id)
+        if plan["completed_workout_id"] is not None:
+            return redirect(detail_url(plan["completed_workout_id"]))
         client = get_visible_client(plan["profile_id"])
         workout_id = start_workout(client, plan)
     return redirect(url_for("workout_sessions.record", workout_id=workout_id))
@@ -120,7 +122,7 @@ def get_workout(workout_id):
     ).fetchone()
     if workout is None:
         abort(404)
-    return workout, get_visible_client(workout["client_id"])
+    return workout, get_visible_client(workout["client_id"], include_archived=workout["completed_at"] is not None)
 
 
 def get_exercises(workout_id):
@@ -294,6 +296,8 @@ def record(workout_id, editing=False):
             abort(400)
         if action == "discard":
             with g.db:
+                g.db.execute("BEGIN IMMEDIATE")
+                get_workout(workout_id)
                 discarded = g.db.execute(
                     "DELETE FROM workout_sessions WHERE id = ? AND revision = ? AND recorder_id = ? "
                     "AND completed_at IS NULL",
@@ -328,6 +332,8 @@ def record(workout_id, editing=False):
                     status = 400
                 else:
                     with g.db:
+                        g.db.execute("BEGIN IMMEDIATE")
+                        get_workout(workout_id)
                         updated = save_workout(workout_id, revision, workout_date, parsed, complete, editing)
                     if updated:
                         return redirect(detail_url(workout_id) if complete else url_for(

@@ -4,7 +4,7 @@
   <a class="button workspace-secondary" href="{{ url_for('history.index', client_id=client.id) if g.user.role == 'trainer' else url_for('dashboard', page='progress') }}">← Back to history</a>
   <div class="workspace-heading">
     <h1>Body-weight history</h1>
-    <p>{{ client.name }}</p>
+    {% if client %}<p>{{ client.name }}</p>{% endif %}
     {% if g.user.role == 'trainer' %}
     <a class="button" href="{{ url_for('history.edit_body_weight', client_id=client.id) }}">Record body weight</a>
     {% endif %}

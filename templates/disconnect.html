@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="workspace-page workspace-form-page">
+  <div class="workspace-heading">
+    <h1>End this connection?</h1>
+    {% if g.user.role == 'trainer' %}
+    <p>You’ll lose access to {{ connection.name }}’s training history and body-weight records. They’ll keep their history.</p>
+    {% else %}
+    <p>{{ connection.trainer_name }} will lose access to your training history and body-weight records. You’ll keep your history and can accept a new trainer’s invitation.</p>
+    {% endif %}
+    <p>Access to assigned plans and unfinished workouts from this connection will end.</p>
+  </div>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Disconnect</button>
+    <a class="button workspace-secondary" href="{{ url_for('dashboard', page='account') }}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

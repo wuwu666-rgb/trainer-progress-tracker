@@ -199,6 +199,15 @@ main :target { scroll-margin-top: 1rem; }
   font-weight: 650;
 }
 .workspace-row-link:hover { background: #eee3fc; }
+.body-weight-link {
+  margin-bottom: 1.5rem;
+  border-color: #9a72c5;
+  background: #eee3fc;
+  color: #512486;
+}
+.body-weight-link:hover { background: #e4d3f7; }
+.body-weight-link strong { display: block; font-size: 1.125rem; }
+.body-weight-link small { display: block; font-size: .875rem; font-weight: 400; }
 .inline-action.workspace-actions { display: flex; }
 .template-editor summary { align-content: center; min-height: 44px; }
 .exercise-actions { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .65rem; }
@@ -295,6 +304,15 @@ header { border-bottom-color: #e5e0d8; }
 .workout-editor input, .workout-editor select { min-width: 0; }
 .workout-editor button, .workout-start-form button, .workout-editor input:not([type=hidden]), .workout-discard button { min-height: 44px; }
 .workout-editor [hidden] { display: none; }
+.workout-editor.is-guided .workout-exercise > summary,
+.workout-editor.is-guided .workout-actual-label,
+.workout-editor.is-guided [data-add-set],
+.workout-editor.is-guided [data-remove-set],
+.workout-editor.is-guided .workout-save-actions > p,
+.workout-editor.is-guided button[value="complete"] { display: none; }
+#workout-guide h2 { margin: .2rem 0; overflow-wrap: anywhere; }
+#workout-guide p { margin: 0; color: #625b71; }
+#workout-guide-review { grid-column: 1 / -1; }
 .workout-editor input, .workout-editor button { scroll-margin-bottom: 5rem; }
 .workout-text-button { background: transparent; color: #6532a5; font-size: .9rem; }
 .workout-text-button:hover { background: #eee3fc; color: #512486; }
