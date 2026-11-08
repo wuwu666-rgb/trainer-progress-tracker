@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS template_exercises (
     target_sets INTEGER NOT NULL CHECK (target_sets > 0),
     target_reps INTEGER NOT NULL CHECK (target_reps > 0),
     target_weight_lb TEXT,
+    unit TEXT NOT NULL DEFAULT 'reps' CHECK (unit IN ('reps', 'minutes')),
     PRIMARY KEY (template_id, position)
 );
 
@@ -76,6 +77,7 @@ CREATE TABLE IF NOT EXISTS plan_exercises (
     target_sets INTEGER NOT NULL CHECK (target_sets > 0),
     target_reps INTEGER NOT NULL CHECK (target_reps > 0),
     target_weight_lb TEXT,
+    unit TEXT NOT NULL DEFAULT 'reps' CHECK (unit IN ('reps', 'minutes')),
     PRIMARY KEY (plan_id, position)
 );
 

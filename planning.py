@@ -8,8 +8,8 @@ from clients import get_visible_client
 
 bp = Blueprint("planning", __name__)
 PLAN_VALIDATION_ERROR = (
-    "Enter a plan name and at least one named exercise. Sets and reps must be positive whole "
-    "numbers. Target weight, if provided, must be zero or greater."
+    "Enter a name and at least one named exercise. Sets, reps and target minutes must be positive "
+    "whole numbers. Target weight, if provided for a reps exercise, must be zero or greater."
 )
 
 
@@ -17,27 +17,30 @@ def read_workout_fields():
     name = request.form.get("name", "").strip()
     exercises = request.form.getlist("exercise")
     weights = request.form.getlist("target_weight_lb") or [""] * len(exercises)
+    units = request.form.getlist("unit") or ["reps"] * len(exercises)
     rows = list(zip_longest(
         exercises,
         request.form.getlist("target_sets"),
         request.form.getlist("target_reps"),
         weights,
+        units,
         fillvalue="",
-    )) or [("", "", "", "")]
+    )) or [("", "", "", "", "reps")]
     targets = []
     try:
-        if not name or len(weights) != len(exercises):
+        if not name or len(weights) != len(exercises) or len(units) != len(exercises):
             raise ValueError
-        for exercise, sets, reps, weight in rows:
+        for exercise, sets, reps, weight, unit in rows:
             exercise = exercise.strip()
             sets, reps = int(sets), int(reps)
             weight = weight.strip()
-            target_weight = Decimal(weight) if weight else None
-            if not exercise or not (0 < sets < 2**63 and 0 < reps < 2**63):
+            target_weight = Decimal(weight) if weight and unit == "reps" else None
+            if not exercise or unit not in ("reps", "minutes") or not (0 < sets < 2**63 and 0 < reps < 2**63):
                 raise ValueError
             if target_weight is not None and (not target_weight.is_finite() or target_weight < 0):
                 raise ValueError
-            targets.append((exercise, sets, reps, str(target_weight) if target_weight is not None else None))
+            # The existing target_reps column stores the whole-number target in the selected unit.
+            targets.append((exercise, sets, reps, str(target_weight) if target_weight is not None else None, unit))
     except (ValueError, InvalidOperation):
         return name, rows, None
     return name, rows, targets
@@ -60,8 +63,8 @@ def owned_templates():
 
 def write_plan_exercises(plan_id, targets):
     g.db.executemany(
-        "INSERT INTO plan_exercises (plan_id, position, name, target_sets, target_reps, target_weight_lb) "
-        "VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO plan_exercises (plan_id, position, name, target_sets, target_reps, target_weight_lb, unit) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
         ((plan_id, position, *target) for position, target in enumerate(targets, 1)),
     )
 
@@ -70,7 +73,7 @@ def write_plan_exercises(plan_id, targets):
 @bp.route("/planning/templates/<int:template_id>/edit", methods=["GET", "POST"])
 def index(template_id=None):
     name = ""
-    rows = [("", "", "", "")]
+    rows = [("", "", "", "", "reps")]
     error = None
 
     if template_id is not None:
@@ -82,7 +85,7 @@ def index(template_id=None):
             abort(404)
         name = template["name"]
         rows = g.db.execute(
-            "SELECT name, target_sets, target_reps, target_weight_lb FROM template_exercises "
+            "SELECT name, target_sets, target_reps, target_weight_lb, unit FROM template_exercises "
             "WHERE template_id = ? ORDER BY position",
             (template_id,),
         ).fetchall()
@@ -110,14 +113,14 @@ def index(template_id=None):
                     )
                 g.db.executemany(
                     "INSERT INTO template_exercises "
-                    "(template_id, position, name, target_sets, target_reps, target_weight_lb) VALUES (?, ?, ?, ?, ?, ?)",
+                    "(template_id, position, name, target_sets, target_reps, target_weight_lb, unit) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     [(template_id, position, *target) for position, target in enumerate(targets, 1)],
                 )
             return redirect(url_for("planning.index"))
 
     templates = {}
     for exercise in g.db.execute(
-        "SELECT t.id, t.name AS template_name, e.name, e.target_sets, e.target_reps, e.target_weight_lb "
+        "SELECT t.id, t.name AS template_name, e.name, e.target_sets, e.target_reps, e.target_weight_lb, e.unit "
         "FROM templates AS t JOIN template_exercises AS e ON e.template_id = t.id "
         "WHERE t.trainer_id = ? ORDER BY t.id DESC, e.position",
         (g.user["id"],),
@@ -155,8 +158,8 @@ def copy_template(template_id=None):
             abort(404)
         plan_id = result.lastrowid
         g.db.execute(
-            "INSERT INTO plan_exercises (plan_id, position, name, target_sets, target_reps, target_weight_lb) "
-            "SELECT ?, position, name, target_sets, target_reps, target_weight_lb "
+            "INSERT INTO plan_exercises (plan_id, position, name, target_sets, target_reps, target_weight_lb, unit) "
+            "SELECT ?, position, name, target_sets, target_reps, target_weight_lb, unit "
             "FROM template_exercises WHERE template_id = ?",
             (plan_id, template_id),
         )
@@ -166,7 +169,7 @@ def copy_template(template_id=None):
 @bp.route("/planning/plans/new", methods=["GET", "POST"])
 def new_plan():
     name = ""
-    rows = [("", "", "", "")]
+    rows = [("", "", "", "", "reps")]
     error = None
     if request.method == "POST":
         check_csrf()
@@ -220,7 +223,7 @@ def plan_for_client(client_id):
             abort(404)
 
     name = ""
-    rows = [("", "", "", "")]
+    rows = [("", "", "", "", "reps")]
     error = None
     if request.method == "POST":
         check_csrf()
@@ -244,7 +247,7 @@ def plan_for_client(client_id):
     elif template is not None:
         name = template["name"]
         rows = g.db.execute(
-            "SELECT name, target_sets, target_reps, target_weight_lb FROM template_exercises "
+            "SELECT name, target_sets, target_reps, target_weight_lb, unit FROM template_exercises "
             "WHERE template_id = ? ORDER BY position",
             (template_id,),
         ).fetchall() or rows
@@ -290,7 +293,7 @@ def get_visible_plan(plan_id):
 
 def get_plan_exercises(plan_id):
     return g.db.execute(
-        "SELECT name, target_sets, target_reps, target_weight_lb FROM plan_exercises "
+        "SELECT name, target_sets, target_reps, target_weight_lb, unit FROM plan_exercises "
         "WHERE plan_id = ? ORDER BY position",
         (plan_id,),
     ).fetchall()
@@ -326,7 +329,7 @@ def edit_plan(plan_id):
 
     return render_template(
         "plan_editor.html", plan=plan, show_editor=True, name=name,
-        rows=rows or [("", "", "", "")], error=error, reorder=True,
+        rows=rows or [("", "", "", "", "reps")], error=error, reorder=True,
     ), 400 if error else 200
 
 

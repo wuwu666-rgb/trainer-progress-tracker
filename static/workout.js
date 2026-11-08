@@ -242,7 +242,11 @@ function initializeWorkoutGuide() {
     const row = rows[setIndex];
     const result = row.querySelector("[data-set-result]");
     result.required = true;
+    if (exercise.dataset.unit === "minutes" && result.valueAsNumber === 0) {
+      result.setCustomValidity("Enter a duration greater than zero.");
+    }
     const valid = result.reportValidity();
+    result.setCustomValidity("");
     result.required = false;
     if (!valid || !row.querySelector("[data-set-weight]").reportValidity()) return;
     if (setIndex + 1 < count(exercise, rows)) {

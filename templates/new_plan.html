@@ -32,8 +32,8 @@
   {% endif %}
   <label>Plan name <input name="name" value="{{ name }}" required></label>
   <div id="exercise-list">
-    {% for exercise, sets, reps, weight in rows %}
-    {{ exercise_fields(exercise, sets, reps, weight) }}
+    {% for exercise, sets, reps, weight, unit in rows %}
+    {{ exercise_fields(exercise, sets, reps, weight, unit) }}
     {% endfor %}
   </div>
   <button type="button" id="add-exercise">Add exercise</button>

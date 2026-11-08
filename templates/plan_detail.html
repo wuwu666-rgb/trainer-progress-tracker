@@ -27,7 +27,7 @@
   <h2>Planned exercises</h2>
   <ol class="workspace-exercises">
     {% for exercise in exercises %}
-    <li>{{ exercise.name }} <span class="exercise-metrics">{{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps{% if exercise.target_weight_lb is not none %} · {{ exercise.target_weight_lb }} lb target{% endif %}</span></li>
+    <li>{{ exercise.name }} <span class="exercise-metrics">{{ exercise.target_sets }} sets × {{ exercise.target_reps }} {{ 'min' if exercise.unit == 'minutes' else 'reps' }}{% if exercise.target_weight_lb is not none %} · {{ exercise.target_weight_lb }} lb target{% endif %}</span></li>
     {% endfor %}
   </ol>
 </section>

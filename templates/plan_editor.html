@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% from "exercise_fields.html" import exercise_fields with context %}
 
-{% macro compact_exercise(exercise='', sets='', reps='', weight='', expanded=false) %}
+{% macro compact_exercise(exercise='', sets='', reps='', weight='', unit='reps', expanded=false) %}
 <details class="plan-exercise" name="plan-exercises" data-plan-exercise{% if expanded %} open{% endif %}>
   <summary>
     <strong data-plan-exercise-name>{{ exercise or 'New exercise' }}</strong>
-    <span class="exercise-metrics" data-plan-exercise-targets>{% if sets and reps %}{{ sets }} sets × {{ reps }} reps{% endif %}</span>
+    <span class="exercise-metrics" data-plan-exercise-targets>{% if sets and reps %}{{ sets }} sets × {{ reps }} {{ 'min' if unit == 'minutes' else 'reps' }}{% endif %}</span>
   </summary>
-  {{ exercise_fields(exercise, sets, reps, weight) }}
+  {{ exercise_fields(exercise, sets, reps, weight, unit) }}
 </details>
 {% endmacro %}
 
@@ -53,8 +53,8 @@
     {% if template %}<input type="hidden" name="template_id" value="{{ template.id }}">{% endif %}
     <label>Plan name <input name="name" value="{{ name }}" required></label>
     <div id="exercise-list">
-      {% for exercise, sets, reps, weight in rows %}
-      {{ compact_exercise(exercise, sets, reps, weight, expanded=not exercise and loop.first) }}
+      {% for exercise, sets, reps, weight, unit in rows %}
+      {{ compact_exercise(exercise, sets, reps, weight, unit, expanded=not exercise and loop.first) }}
       {% endfor %}
     </div>
     <button type="button" id="add-exercise">Add exercise</button>

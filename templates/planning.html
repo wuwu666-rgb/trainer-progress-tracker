@@ -21,8 +21,8 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>Template name <input name="name" value="{{ name }}" required></label>
       <div id="exercise-list">
-        {% for exercise, sets, reps, weight in rows %}
-        {{ exercise_fields(exercise, sets, reps, weight) }}
+        {% for exercise, sets, reps, weight, unit in rows %}
+        {{ exercise_fields(exercise, sets, reps, weight, unit) }}
         {% endfor %}
       </div>
       <button type="button" id="add-exercise">Add exercise</button>
@@ -43,7 +43,7 @@
       </div>
       <ol class="workspace-exercises">
         {% for exercise in template.exercises %}
-        <li>{{ exercise.name }} · {{ exercise.target_sets }} sets × {{ exercise.target_reps }} reps{% if exercise.target_weight_lb is not none %} · {{ exercise.target_weight_lb }} lb target{% endif %}</li>
+        <li>{{ exercise.name }} · {{ exercise.target_sets }} sets × {{ exercise.target_reps }} {{ 'min' if exercise.unit == 'minutes' else 'reps' }}{% if exercise.target_weight_lb is not none %} · {{ exercise.target_weight_lb }} lb target{% endif %}</li>
         {% endfor %}
       </ol>
       <div class="workspace-actions card-actions">

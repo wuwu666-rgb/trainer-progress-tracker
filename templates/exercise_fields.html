@@ -1,15 +1,21 @@
-{% macro exercise_fields(exercise='', sets='', reps='', weight='') %}
+{% macro exercise_fields(exercise='', sets='', reps='', weight='', unit='reps') %}
 <fieldset class="exercise-card">
   <legend>Exercise</legend>
   <label>Exercise name <input name="exercise" value="{{ exercise }}" required></label>
+  <label>Measure in
+    <select name="unit" class="role-select">
+      <option value="reps"{% if unit == 'reps' %} selected{% endif %}>Reps</option>
+      <option value="minutes"{% if unit == 'minutes' %} selected{% endif %}>Minutes</option>
+    </select>
+  </label>
   <div class="exercise-targets">
     <label>Sets <input type="number" name="target_sets" inputmode="numeric" min="1" step="1" value="{{ sets }}" required></label>
-    <label>Reps per set <input type="number" name="target_reps" inputmode="numeric" min="1" step="1" value="{{ reps }}" required></label>
+    <label><span data-target-label>{{ 'Minutes per set' if unit == 'minutes' else 'Reps per set' }}</span> <input type="number" name="target_reps" inputmode="numeric" min="1" step="1" value="{{ reps }}" required></label>
   </div>
-  <details class="target-weight"{% if weight %} open{% endif %}>
+  <details class="target-weight"{% if unit == 'minutes' %} hidden{% elif weight %} open{% endif %}>
     <summary>Add target weight</summary>
     <label>Target weight (lb, optional)
-      <input type="number" name="target_weight_lb" inputmode="decimal" min="0" step="any" value="{{ weight if weight is not none else '' }}">
+      <input type="number" name="target_weight_lb" inputmode="decimal" min="0" step="any" value="{{ weight if weight is not none else '' }}"{% if unit == 'minutes' %} readonly{% endif %}>
     </label>
   </details>
   <div class="exercise-actions">
