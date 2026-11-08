@@ -40,9 +40,9 @@ def start_workout(client, plan=None):
         g.db.executemany(
             "INSERT INTO workout_session_exercises "
             "(workout_id, position, name, unit, target_sets, target_reps, target_weight_lb) "
-            "VALUES (?, ?, ?, 'reps', ?, ?, ?)",
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
-                (workout_id, position, row["name"], row["target_sets"], row["target_reps"], row["target_weight_lb"])
+                (workout_id, position, row["name"], row["unit"], row["target_sets"], row["target_reps"], row["target_weight_lb"])
                 for position, row in enumerate(get_plan_exercises(plan_id), 1)
             ),
         )

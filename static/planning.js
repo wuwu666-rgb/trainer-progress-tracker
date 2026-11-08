@@ -37,6 +37,14 @@ exerciseList.addEventListener("invalid", (event) => {
 }, true);
 
 exerciseList.addEventListener("input", (event) => {
+  const fields = event.target.closest(".exercise-card");
+  if (!fields) return;
+  const timed = fields.querySelector('[name="unit"]').value === "minutes";
+  if (event.target.name === "unit") {
+    fields.querySelector("[data-target-label]").textContent = timed ? "Minutes per set" : "Reps per set";
+    fields.querySelector(".target-weight").hidden = timed;
+    fields.querySelector('[name="target_weight_lb"]').readOnly = timed;
+  }
   const card = event.target.closest("[data-plan-exercise]");
   if (!card) return;
   const exercise = card.querySelector('[name="exercise"]').value.trim();
@@ -44,7 +52,7 @@ exerciseList.addEventListener("input", (event) => {
   const reps = card.querySelector('[name="target_reps"]').value;
   card.querySelector("[data-plan-exercise-name]").textContent = exercise || "New exercise";
   card.querySelector("[data-plan-exercise-targets]").textContent =
-    sets && reps ? `${sets} sets × ${reps} reps` : "";
+    sets && reps ? `${sets} sets × ${reps} ${timed ? "min" : "reps"}` : "";
 });
 
 exerciseList.addEventListener("click", (event) => {

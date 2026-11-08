@@ -144,6 +144,11 @@ def init_database(*, seed_demo=False):
             columns = {column[1] for column in db.execute(f"PRAGMA table_info({table})")}
             if "target_weight_lb" not in columns:
                 db.execute(f"ALTER TABLE {table} ADD COLUMN target_weight_lb TEXT")
+            if "unit" not in columns:
+                db.execute(
+                    f"ALTER TABLE {table} ADD COLUMN unit TEXT NOT NULL DEFAULT 'reps' "
+                    "CHECK (unit IN ('reps', 'minutes'))"
+                )
 
         plan_columns = {column[1] for column in db.execute("PRAGMA table_info(plans)")}
         if "profile_id" not in plan_columns:
