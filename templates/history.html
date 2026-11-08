@@ -12,7 +12,13 @@
 {% endif %}
 <h1>{{ 'Progress' if dashboard_page == 'progress' else 'Training history' }}</h1>
 {% if dashboard_page == "progress" %}
-<p><a class="button workspace-secondary" href="{{ url_for('history.body_weights') }}">Body-weight history</a></p>
+<a class="workspace-card workspace-row-link body-weight-link" href="{{ url_for('history.body_weights') }}">
+  <span>
+    <strong>Body-weight history</strong>
+    <small>View your saved measurements</small>
+  </span>
+  <span aria-hidden="true">→</span>
+</a>
 <h2>Training history</h2>
 {% elif client %}
 <p>{{ client.name }}</p>

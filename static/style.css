@@ -199,6 +199,15 @@ main :target { scroll-margin-top: 1rem; }
   font-weight: 650;
 }
 .workspace-row-link:hover { background: #eee3fc; }
+.body-weight-link {
+  margin-bottom: 1.5rem;
+  border-color: #9a72c5;
+  background: #eee3fc;
+  color: #512486;
+}
+.body-weight-link:hover { background: #e4d3f7; }
+.body-weight-link strong { display: block; font-size: 1.125rem; }
+.body-weight-link small { display: block; font-size: .875rem; font-weight: 400; }
 .inline-action.workspace-actions { display: flex; }
 .template-editor summary { align-content: center; min-height: 44px; }
 .exercise-actions { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .65rem; }
