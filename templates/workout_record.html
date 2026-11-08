@@ -43,6 +43,13 @@
       </label>
     </details>
     {% endif %}
+    {% if not trainer and not editing and exercises %}
+    <div id="workout-guide" hidden>
+      <p id="workout-guide-position"></p>
+      <h2 id="workout-guide-title" tabindex="-1" aria-describedby="workout-guide-position workout-guide-target"></h2>
+      <p id="workout-guide-target"></p>
+    </div>
+    {% endif %}
     <div class="workout-exercises" id="workout-exercises">
       {% for exercise in exercises %}
       {{ exercise_fields(exercise, loop.index, loop.first, edit_exercise=trainer, correct_name=editing) }}
@@ -50,6 +57,14 @@
       <p>This workout has no exercises. Ask your trainer to check the plan.</p>
       {% endfor %}
     </div>
+    {% if not trainer and not editing and exercises %}
+    <div id="workout-guide-controls" class="workout-save-actions" hidden>
+      <button class="workspace-secondary" id="workout-guide-previous" type="button">Previous set</button>
+      <button id="workout-guide-next" type="button">Next set</button>
+      <button class="workout-text-button" id="workout-guide-review" type="button">Review all sets</button>
+    </div>
+    <button class="workspace-secondary" id="workout-guide-resume" type="button" hidden>Return to guided workout</button>
+    {% endif %}
     {% if trainer %}
     <button class="workspace-secondary" type="button" id="workout-add-exercise">{{ '+ Add extra exercise' if workout.plan_name else '+ Add exercise' }}</button>
     {% endif %}
