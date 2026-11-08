@@ -61,7 +61,7 @@
     {% for plan in plans %}
     <section class="workspace-card workspace-card-heading">
       <h3><a href="{{ url_for('planning.plan_detail', plan_id=plan.id) }}">{{ plan.name }}</a></h3>
-      <span class="workspace-status{% if plan.client_name %} is-connected{% endif %}">{{ 'Assigned to ' ~ plan.client_name if plan.client_name else 'Unassigned' }}</span>
+      <span class="workspace-status{% if plan.client_name %} is-connected{% endif %}">{{ 'Assigned to ' ~ plan.client_name if plan.client_name else 'Former client plan' if plan.profile_id is not none else 'Unassigned' }}</span>
     </section>
     {% else %}
     <p class="workspace-empty">No workout plans yet. Start from a template or create a plan from scratch.</p>

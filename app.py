@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash
 
 from auth import bp as auth, csrf_token, load_user
 
-from clients import bp as clients, get_linked_profile
+from clients import CLIENT_HISTORY_PROFILES, bp as clients, get_linked_profile
 from planning import bp as planning, get_assigned_plans
 from sessions import bp as sessions
 from history import bp as history, get_workouts
@@ -41,7 +41,7 @@ def open_database():
         if request.endpoint in ("clients.invitations", "clients.respond"):
             if g.user["role"] != "client":
                 abort(403)
-        elif g.user["role"] != "trainer" and not (
+        elif g.user["role"] != "trainer" and request.endpoint != "clients.disconnect" and not (
             request.blueprint in ("history", "workout_sessions")
             or (request.endpoint == "planning.plan_detail" and request.method in ("GET", "HEAD"))
         ):
@@ -61,14 +61,13 @@ def home():
         return redirect(url_for("auth.login"))
     if g.user["role"] == "client":
         profile = get_linked_profile()
-        record_count = 0
-        if profile:
-            record_count = g.db.execute(
-                "SELECT (SELECT COUNT(*) FROM workouts WHERE client_id = ?) + "
-                "(SELECT COUNT(*) FROM cardio_workouts WHERE client_id = ?) + "
-                "(SELECT COUNT(*) FROM workout_sessions WHERE client_id = ? AND completed_at IS NOT NULL)",
-                (profile["id"], profile["id"], profile["id"]),
-            ).fetchone()[0]
+        record_count = g.db.execute(
+            f"WITH profiles AS ({CLIENT_HISTORY_PROFILES}) "
+            "SELECT (SELECT COUNT(*) FROM workouts WHERE client_id IN (SELECT id FROM profiles)) + "
+            "(SELECT COUNT(*) FROM cardio_workouts WHERE client_id IN (SELECT id FROM profiles)) + "
+            "(SELECT COUNT(*) FROM workout_sessions WHERE client_id IN (SELECT id FROM profiles) "
+            "AND completed_at IS NOT NULL)", (g.user["id"],),
+        ).fetchone()[0]
         return render_template(
             "client_home.html", profile=profile, plans=get_assigned_plans(),
             record_count=record_count,
@@ -90,7 +89,15 @@ def dashboard(page):
         return redirect(url_for("auth.login"))
 
     if page == "account":
-        return render_template("dashboard_page.html", title="Account", dashboard_page=page)
+        trainer = g.user["role"] == "trainer"
+        connections = g.db.execute(
+            "SELECT id, name FROM clients WHERE trainer_id = ? AND client_user_id IS NOT NULL ORDER BY name, id",
+            (g.user["id"],),
+        ).fetchall() if trainer else ()
+        return render_template(
+            "dashboard_page.html", title="Account", dashboard_page=page,
+            connections=connections, profile=None if trainer else get_linked_profile(),
+        )
 
     if g.user["role"] != "client":
         abort(404)
@@ -100,11 +107,7 @@ def dashboard(page):
             profile=get_linked_profile(),
         )
     if page == "progress":
-        profile = get_linked_profile()
-        return render_template(
-            "history.html", dashboard_page=page, client=profile,
-            workouts=get_workouts(profile["id"]) if profile else (),
-        )
+        return render_template("history.html", dashboard_page=page, workouts=get_workouts())
     abort(404)
 
 
@@ -123,6 +126,8 @@ def init_database(*, seed_demo=False):
         db.execute("CREATE INDEX IF NOT EXISTS clients_trainer_name ON clients (trainer_id, name)")
         if "client_user_id" not in client_columns:
             db.execute("ALTER TABLE clients ADD COLUMN client_user_id INTEGER REFERENCES users(id)")
+        if "archived_client_user_id" not in client_columns:
+            db.execute("ALTER TABLE clients ADD COLUMN archived_client_user_id INTEGER REFERENCES users(id)")
         db.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS clients_linked_account "
             "ON clients (client_user_id) WHERE client_user_id IS NOT NULL"

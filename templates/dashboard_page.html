@@ -9,4 +9,31 @@
     <button type="submit">Log out</button>
   </form>
 </section>
+{% if request.args.get('disconnected') == '1' %}
+<p role="status">Connection ended.</p>
+{% endif %}
+<section>
+  {% if g.user.role == 'trainer' %}
+  <h2>Client connections</h2>
+  <div class="workspace-list">
+    {% for connection in connections %}
+    <div class="workspace-card workspace-card-heading">
+      <strong>{{ connection.name }}</strong>
+      <a class="button workspace-secondary" href="{{ url_for('clients.disconnect', client_id=connection.id) }}">Disconnect</a>
+    </div>
+    {% else %}
+    <p>No connected clients.</p>
+    {% endfor %}
+  </div>
+  {% else %}
+  <h2>Trainer connection</h2>
+  {% if profile %}
+  <p>Connected to <strong>{{ profile.trainer_name }}</strong></p>
+  <a class="button workspace-secondary" href="{{ url_for('clients.disconnect', client_id=profile.id) }}">Disconnect</a>
+  {% else %}
+  <p>No trainer connected. Accept an invitation to connect with a trainer.</p>
+  <a class="button workspace-secondary" href="{{ url_for('clients.invitations') }}">Trainer invitations</a>
+  {% endif %}
+  {% endif %}
+</section>
 {% endblock %}

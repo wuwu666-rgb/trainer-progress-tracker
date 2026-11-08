@@ -126,7 +126,7 @@ def index(template_id=None):
         template["exercises"].append(exercise)
 
     plans = g.db.execute(
-        "SELECT p.id, p.name, c.name AS client_name FROM plans AS p "
+        "SELECT p.id, p.name, p.profile_id, c.name AS client_name FROM plans AS p "
         "LEFT JOIN clients AS c ON c.id = p.profile_id AND c.trainer_id = p.trainer_id "
         "WHERE p.trainer_id = ? ORDER BY p.id DESC",
         (g.user["id"],),

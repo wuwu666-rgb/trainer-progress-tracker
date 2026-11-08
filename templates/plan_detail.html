@@ -8,12 +8,12 @@
 {% endif %}
 <div class="workspace-heading"><h1>{{ plan.name }}</h1></div>
 {% if g.user.role == "trainer" %}
-<p class="badge">{{ 'Assigned to ' ~ plan.client_name if plan.client_name else 'Unassigned workout plan' }}</p>
+<p class="badge">{{ 'Assigned to ' ~ plan.client_name if plan.client_name else 'Former client plan' if plan.profile_id is not none else 'Unassigned workout plan' }}</p>
 {% if plan.profile_id is none %}
 <p>To use this plan during a session, open a client’s <strong>Record workout</strong> page and choose <strong>Start from a plan</strong>.</p>
 {% endif %}
 {% endif %}
-{% if g.user.role == "client" or plan.profile_id is not none %}
+{% if g.user.role == "client" or plan.client_name %}
 <form class="inline-action workspace-actions" method="post" action="{{ url_for('workout_sessions.start_client', plan_id=plan.id) if g.user.role == 'client' else url_for('workout_sessions.start_trainer', client_id=plan.profile_id) }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   {% if g.user.role == "trainer" %}<input type="hidden" name="plan_id" value="{{ plan.id }}">{% endif %}

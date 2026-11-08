@@ -54,6 +54,8 @@ def record(client_id):
                             or (distance is not None and (not distance.is_finite() or distance < 0))):
                         raise ValueError
                     with g.db:
+                        g.db.execute("BEGIN IMMEDIATE")
+                        get_visible_client(client_id)
                         g.db.execute(
                             "INSERT INTO cardio_workouts "
                             "(client_id, workout_date, exercise, duration_min, distance_km, set_count) "
@@ -69,6 +71,8 @@ def record(client_id):
                             or (exercise_type == "weighted" and weight.is_zero())):
                         raise ValueError
                     with g.db:
+                        g.db.execute("BEGIN IMMEDIATE")
+                        get_visible_client(client_id)
                         g.db.execute(
                             "INSERT INTO workouts (client_id, workout_date, exercise, reps, weight_lb, set_count) "
                             "VALUES (?, ?, ?, ?, ?, ?)",

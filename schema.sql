@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS clients (
     name TEXT NOT NULL,
     goals TEXT NOT NULL DEFAULT '',
     trainer_id INTEGER REFERENCES users(id),
-    client_user_id INTEGER REFERENCES users(id)
+    client_user_id INTEGER REFERENCES users(id),
+    archived_client_user_id INTEGER REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS workouts (

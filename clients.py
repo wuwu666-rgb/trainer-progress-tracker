@@ -5,16 +5,51 @@ from auth import check_csrf
 bp = Blueprint("clients", __name__)
 
 CLIENTS_PER_PAGE = 8
+CLIENT_HISTORY_PROFILES = "SELECT id FROM clients WHERE ? IN (client_user_id, archived_client_user_id)"
 
-def get_visible_client(client_id):
-    owner_column = "trainer_id" if g.user["role"] == "trainer" else "client_user_id"
+def get_visible_client(client_id, *, include_archived=False):
+    if not 0 < client_id < 2**63:
+        abort(404)
+    if g.user["role"] == "trainer":
+        access = "trainer_id = ?"
+    elif include_archived:
+        access = "? IN (client_user_id, archived_client_user_id)"
+    else:
+        access = "client_user_id = ?"
     client = g.db.execute(
-        f"SELECT id, name, goals, client_user_id FROM clients WHERE id = ? AND {owner_column} = ?",
+        f"SELECT id, name, goals, client_user_id FROM clients WHERE id = ? AND {access}",
         (client_id, g.user["id"]),
     ).fetchone()
     if client is None:
         abort(404)
     return client
+
+
+@bp.route("/dashboard/account/connections/<int:client_id>/disconnect", methods=["GET", "POST"])
+def disconnect(client_id):
+    if not 0 < client_id < 2**63:
+        abort(404)
+    owner_column = "trainer_id" if g.user["role"] == "trainer" else "client_user_id"
+    condition = f"id = ? AND {owner_column} = ? AND client_user_id IS NOT NULL AND trainer_id IS NOT NULL"
+    params = (client_id, g.user["id"])
+    if request.method == "POST":
+        check_csrf()
+        with g.db:
+            result = g.db.execute(
+                "UPDATE clients SET archived_client_user_id = client_user_id, "
+                f"client_user_id = NULL, trainer_id = NULL WHERE {condition}", params,
+            )
+            if not result.rowcount:
+                abort(404)
+        return redirect(url_for("dashboard", page="account", disconnected=1))
+
+    connection = g.db.execute(
+        f"SELECT id, name, (SELECT name FROM users WHERE id = clients.trainer_id) AS trainer_name "
+        f"FROM clients WHERE {condition}", params,
+    ).fetchone()
+    if connection is None:
+        abort(404)
+    return render_template("disconnect.html", connection=connection, dashboard_page="account")
 
 
 @bp.route("/clients", methods=["GET", "POST"])

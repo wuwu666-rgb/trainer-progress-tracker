@@ -11,15 +11,12 @@
 </div>
 {% endif %}
 <h1>{{ 'Progress' if dashboard_page == 'progress' else 'Training history' }}</h1>
-{% if client %}
+{% if dashboard_page == "progress" %}
+<p><a class="button workspace-secondary" href="{{ url_for('history.body_weights') }}">Body-weight history</a></p>
+<h2>Training history</h2>
+{% elif client %}
 <p>{{ client.name }}</p>
 <p><a class="button workspace-secondary" href="{{ url_for('history.body_weights', client_id=client.id) }}">Body-weight history</a></p>
-{% if dashboard_page == "progress" %}
-<h2>Training history</h2>
-{% endif %}
-{% else %}
-<p>Connect to your trainer to see your saved training records.</p>
-<p><a class="button" href="{{ url_for('clients.invitations') }}">Trainer invitations</a></p>
 {% endif %}
 {% if g.user.role == "trainer" %}
 <a class="button" href="{{ url_for('workout_sessions.start_trainer', client_id=client.id, q=request.args.get('q') or none) }}">Record another workout</a>
@@ -53,6 +50,6 @@
   {% endif %}
 </section>
 {% else %}
-{% if client %}<p>No training records yet.</p>{% endif %}
+<p>No training records yet.</p>
 {% endfor %}
 {% endblock %}

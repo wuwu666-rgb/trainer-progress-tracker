@@ -4,20 +4,28 @@ from decimal import Decimal, InvalidOperation
 from flask import Blueprint, abort, g, redirect, render_template, request, url_for
 
 from auth import check_csrf
-from clients import get_visible_client
+from clients import CLIENT_HISTORY_PROFILES, get_visible_client
 from training_dates import today_in_new_york
 
 bp = Blueprint("history", __name__)
 
 
+def profile_scope(client_id):
+    if client_id is None:
+        return CLIENT_HISTORY_PROFILES, g.user["id"]
+    return "SELECT ?", client_id
+
+
 @bp.get("/clients/<int:client_id>/body-weights")
-def body_weights(client_id):
-    if not 0 < client_id < 2**63:
+@bp.get("/dashboard/progress/body-weights")
+def body_weights(client_id=None):
+    if client_id is None and g.user["role"] != "client":
         abort(404)
-    client = get_visible_client(client_id)
+    client = get_visible_client(client_id, include_archived=True) if client_id is not None else None
+    scope, profile = profile_scope(client_id)
     entries = g.db.execute(
         "SELECT id, measurement_date, weight_lb FROM body_weights "
-        "WHERE client_id = ? ORDER BY measurement_date DESC", (client_id,),
+        f"WHERE client_id IN ({scope}) ORDER BY measurement_date DESC, id DESC", (profile,),
     ).fetchall()
     return render_template("body_weights.html", client=client, entries=entries)
 
@@ -98,18 +106,19 @@ def edit_body_weight(client_id, entry_id=None):
     ), status
 
 
-def get_workouts(client_id):
+def get_workouts(client_id=None):
+    scope, profile = profile_scope(client_id)
     rows = g.db.execute(
         "SELECT id, workout_date, exercise, reps, weight_lb, set_count, "
-        "NULL AS duration_min, NULL AS distance_km FROM workouts WHERE client_id = ? "
+        f"NULL AS duration_min, NULL AS distance_km FROM workouts WHERE client_id IN ({scope}) "
         "UNION ALL "
         "SELECT id, workout_date, exercise, NULL, NULL, set_count, duration_min, distance_km "
-        "FROM cardio_workouts WHERE client_id = ? "
+        f"FROM cardio_workouts WHERE client_id IN ({scope}) "
         "ORDER BY workout_date DESC, id DESC",
-        (client_id, client_id),
+        (profile, profile),
     ).fetchall()
     sessions = g.db.execute(
-        """
+        f"""
         WITH recorded_sets AS (
             SELECT w.id, w.workout_date, w.plan_name, w.recorder_id, e.id AS exercise_id,
                    recorder.name AS recorder_name, recorder.role AS recorder_role,
@@ -119,7 +128,7 @@ def get_workouts(client_id):
             JOIN workout_session_exercises AS e ON e.workout_id = w.id
             JOIN workout_session_sets AS s ON s.exercise_id = e.id
             LEFT JOIN users AS recorder ON recorder.id = w.recorder_id
-            WHERE w.client_id = ? AND w.completed_at IS NOT NULL
+            WHERE w.client_id IN ({scope}) AND w.completed_at IS NOT NULL
         )
         SELECT id, workout_date, plan_name, recorder_id, recorder_name, recorder_role,
                COUNT(DISTINCT exercise_id) AS exercise_count, COUNT(*) AS set_count,
@@ -130,7 +139,7 @@ def get_workouts(client_id):
         FROM recorded_sets
         GROUP BY id, workout_date, plan_name, recorder_id, recorder_name, recorder_role
         """,
-        (client_id,),
+        (profile,),
     )
     workouts = [workout_display(row) for row in rows]
     workouts.extend(dict(row, grouped=True) for row in sessions)
@@ -148,7 +157,7 @@ def workout_display(row):
 
 @bp.get("/clients/<int:client_id>/history")
 def index(client_id):
-    client = get_visible_client(client_id)
+    client = get_visible_client(client_id, include_archived=True)
     return render_template("history.html", client=client, workouts=get_workouts(client_id))
 
 
@@ -172,6 +181,8 @@ def delete_record(client_id, kind, record_id):
     if request.method == "POST":
         check_csrf()
         with g.db:
+            g.db.execute("BEGIN IMMEDIATE")
+            get_visible_client(client_id)
             deleted = g.db.execute(
                 f"DELETE FROM {table} WHERE {condition}", params,
             )
