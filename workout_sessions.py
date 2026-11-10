@@ -265,6 +265,59 @@ def detail_url(workout_id):
     return url_for("workout_sessions.detail", workout_id=workout_id, q=request.args.get("q") or None)
 
 
+def is_valid_workout_date(value, today):
+    try:
+        return date.fromisoformat(value).isoformat() == value and value <= today
+    except ValueError:
+        return False
+
+
+@bp.post("/workouts/<int:workout_id>/sync")
+def sync(workout_id):
+    """Save a draft or finish a workout recorded offline. Replies with JSON."""
+    check_csrf()
+    revision = request.form.get("revision", type=int)
+    action = request.form.get("action")
+    if revision is None or not 0 <= revision < 2**63 or action not in ("save", "complete"):
+        abort(400)
+    with g.db:
+        g.db.execute("BEGIN")
+        workout, _ = get_workout(workout_id)
+        if workout["recorder_id"] != g.user["id"]:
+            abort(404)
+        saved = get_exercises(workout_id)
+    if workout["completed_at"]:
+        return {
+            "state": "completed", "url": detail_url(workout_id),
+            "error": "This workout was already finished. Your offline entries were not applied.",
+        }, 409
+    if revision != workout["revision"]:
+        return {
+            "state": "conflict",
+            "error": "This workout changed elsewhere. Your offline entries are kept on this device.",
+        }, 409
+
+    trainer = g.user["role"] == "trainer"
+    workout_date = request.form.get("workout_date", "") if trainer else workout["workout_date"]
+    if not is_valid_workout_date(workout_date, today_in_new_york().isoformat()):
+        return {"state": "invalid", "error": "Choose a valid workout date on or before today."}, 400
+    complete = action == "complete"
+    try:
+        parsed = validated_exercises(read_exercises(saved, trainer, False), complete)
+    except ValueError as problem:
+        return {"state": "invalid", "error": str(problem)}, 400
+    with g.db:
+        g.db.execute("BEGIN IMMEDIATE")
+        get_workout(workout_id)
+        updated = save_workout(workout_id, revision, workout_date, parsed, complete, False)
+    if not updated:
+        return {
+            "state": "conflict",
+            "error": "This workout changed elsewhere. Your offline entries are kept on this device.",
+        }, 409
+    return {"state": "ok", "revision": revision + 1, "complete": complete, "url": detail_url(workout_id)}
+
+
 @bp.route("/workouts/<int:workout_id>/record", methods=["GET", "POST"])
 @bp.route("/workouts/<int:workout_id>/edit", methods=["GET", "POST"], endpoint="edit", defaults={"editing": True})
 def record(workout_id, editing=False):
@@ -318,10 +371,7 @@ def record(workout_id, editing=False):
             if trainer or editing:
                 workout_date = request.form.get("workout_date", "")
             complete = editing or action == "complete"
-            try:
-                if date.fromisoformat(workout_date).isoformat() != workout_date or workout_date > today:
-                    raise ValueError
-            except ValueError:
+            if not is_valid_workout_date(workout_date, today):
                 error = "Choose a valid workout date on or before today."
                 status = 400
             if error is None:
