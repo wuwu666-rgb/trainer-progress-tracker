@@ -5,6 +5,7 @@ OneTrainer is a mobile-friendly workout tracker for trainers and clients.
 - Trainers manage client profiles, assign plans from reusable templates or from scratch, and record workouts and body-weight measurements.
 - **Progress** shows charts of body weight and of each exercise over time (top weight for rep exercises, total minutes for timed ones). Trainers see the same charts in a client's history. An exercise appears once it has been recorded on two different days.
 - Clients follow assigned workouts one set at a time and can resume saved drafts. Completed workouts move from **My workouts** to **Progress**, where clients can also view their body-weight history.
+- Download training history or body-weight measurements as CSV from **Progress** or a trainer's client history page. Training exports contain one row per set, including older records; recorder fields are blank for older records that did not save attribution. Exports include the full history, beyond the chart limits.
 - Each client can connect to one trainer at a time. Either person can end the connection from **Account**. Clients keep their completed workout and body-weight history. Former and new trainers cannot access records from the ended connection.
 
 ## Run locally

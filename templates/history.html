@@ -11,6 +11,10 @@
 </div>
 {% endif %}
 <h1>{{ 'Progress' if dashboard_page == 'progress' else 'Training history' }}</h1>
+<div class="workspace-actions">
+  <a class="button workspace-secondary" href="{{ url_for('history.export_csv', client_id=client.id if client else none) }}">Download CSV</a>
+  <a class="button workspace-secondary" href="{{ url_for('history.export_csv', client_id=client.id if client else none, kind='body-weight') }}">Download body-weight CSV</a>
+</div>
 {% if dashboard_page == "progress" %}
 <a class="workspace-card workspace-row-link body-weight-link" href="{{ url_for('history.body_weights') }}">
   <span>

@@ -1,7 +1,9 @@
+import csv
+from io import StringIO
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
-from flask import Blueprint, abort, g, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, g, redirect, render_template, request, url_for
 
 from auth import check_csrf
 from clients import CLIENT_HISTORY_PROFILES, get_visible_client
@@ -14,6 +16,77 @@ def profile_scope(client_id):
     if client_id is None:
         return CLIENT_HISTORY_PROFILES, g.user["id"]
     return "SELECT ?", client_id
+
+
+def csv_cell(value):
+    """Keep spreadsheet applications from interpreting saved text as a formula."""
+    if value is None:
+        return ""
+    text = str(value)
+    if text.lstrip().startswith(("=", "+", "-", "@")) or text.startswith(("\t", "\r", "\n")):
+        return "'" + text
+    return text
+
+
+def training_export_rows(client_id):
+    scope, profile = profile_scope(client_id)
+    rows = g.db.execute(
+        "SELECT w.workout_date, w.id, e.position AS exercise_position, s.position AS set_number, "
+        "e.name AS exercise, CASE WHEN e.unit = 'reps' THEN s.result END AS reps, "
+        "CASE WHEN e.unit = 'minutes' THEN s.result END AS minutes, s.weight_lb, "
+        "NULL AS distance_km, u.name AS recorder_name, u.role AS recorder_role, "
+        "1 AS set_count, 0 AS source "
+        "FROM workout_sessions w "
+        "JOIN workout_session_exercises e ON e.workout_id = w.id "
+        "JOIN workout_session_sets s ON s.exercise_id = e.id "
+        "LEFT JOIN users u ON u.id = w.recorder_id "
+        f"WHERE w.client_id IN ({scope}) AND w.completed_at IS NOT NULL "
+        "UNION ALL SELECT workout_date, id, 1, 1, exercise, reps, NULL, weight_lb, "
+        f"NULL, NULL, NULL, set_count, 1 FROM workouts WHERE client_id IN ({scope}) "
+        "UNION ALL SELECT workout_date, id, 1, 1, exercise, NULL, duration_min, NULL, "
+        f"distance_km, NULL, NULL, set_count, 2 FROM cardio_workouts WHERE client_id IN ({scope}) "
+        "ORDER BY workout_date, source, id, exercise_position, set_number",
+        (profile, profile, profile),
+    )
+    for row in rows:
+        for offset in range(row["set_count"]):
+            yield (row["workout_date"], row["exercise"], row["set_number"] + offset,
+                   row["reps"], row["minutes"], row["weight_lb"], row["distance_km"],
+                   row["recorder_name"], row["recorder_role"])
+
+
+@bp.get("/dashboard/progress/export.csv")
+@bp.get("/clients/<int:client_id>/history/export.csv")
+def export_csv(client_id=None):
+    if client_id is None:
+        if g.user["role"] != "client":
+            abort(404)
+    else:
+        get_visible_client(client_id, include_archived=True)
+    kind = request.args.get("kind", "training")
+    if kind not in ("training", "body-weight"):
+        abort(404)
+    if kind == "body-weight":
+        scope, profile = profile_scope(client_id)
+        header = ("date", "weight_lb", "recorder_name", "recorder_role")
+        rows = g.db.execute(
+            "SELECT b.measurement_date, b.weight_lb, u.name, u.role FROM body_weights b "
+            "LEFT JOIN users u ON u.id = b.recorded_by "
+            f"WHERE b.client_id IN ({scope}) ORDER BY b.measurement_date, b.id", (profile,),
+        )
+    else:
+        header = ("date", "exercise", "set_number", "reps", "minutes", "weight_lb",
+                  "distance_km", "recorder_name", "recorder_role")
+        rows = training_export_rows(client_id)
+    output = StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow(header)
+    writer.writerows(tuple(csv_cell(value) for value in row) for row in rows)
+    return Response(
+        output.getvalue(), content_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{kind}-history.csv"',
+                 "Cache-Control": "no-store"},
+    )
 
 
 @bp.get("/clients/<int:client_id>/body-weights")
