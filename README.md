@@ -53,7 +53,7 @@ These public credentials are for local demos. Each checkout uses its own `traine
 
 Open the site over HTTPS, sign in, and choose **Account → Install OneTrainer**. Confirm the browser’s install prompt if it appears. On iPhone, open the site in Safari and choose **Share → Add to Home Screen**. Turn on **Open as Web App** if shown, then tap **Add**.
 
-Signing in, recording workouts, and viewing history require an internet connection.
+Signing in, starting a workout, and viewing history require an internet connection. A workout you already opened can be recorded offline: entries are kept on the device, and **Save draft** or **Save workout** are queued and sync when you reconnect. If the workout changed elsewhere in the meantime, your entries stay on the device and you choose whether to use or discard them. Offline recording needs HTTPS (or `localhost`) and is best-effort, because a browser can clear its stored data, so reconnect soon after recording. Run the tests with `python -m unittest discover -s tests -t .`.
 
 ## Share a temporary preview with GitHub Codespaces
 
@@ -88,6 +88,6 @@ The same Codespace keeps its test database. Check that port **5000** is **Public
 
 ## Project status
 
-Public HTTPS deployment, offline recording, draft recovery, and synchronization are deferred for this release.
+Public HTTPS deployment is deferred for this release. Offline recording of an already-opened workout is available; starting workouts and browsing history offline are not.
 
 See [Issue #1](https://github.com/wuwu666-rgb/trainer-progress-tracker/issues/1) for task ownership and completion status.
