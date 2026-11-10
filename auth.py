@@ -26,7 +26,7 @@ def csrf_token():
 
 def check_csrf():
     expected = session.get("csrf_token", "")
-    supplied = request.form.get("csrf_token", "")
+    supplied = request.form.get("csrf_token", "") or request.headers.get("X-CSRF-Token", "")
     if not expected or not secrets.compare_digest(expected.encode(), supplied.encode()):
         abort(400)
 

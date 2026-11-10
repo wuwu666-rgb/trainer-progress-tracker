@@ -4,7 +4,7 @@ import os
 import secrets
 import sqlite3
 
-from flask import Flask, abort, g, redirect, render_template, request, url_for
+from flask import Flask, abort, g, redirect, render_template, request, send_from_directory, url_for
 
 from werkzeug.security import generate_password_hash
 
@@ -53,6 +53,14 @@ def close_database(error):
     db = g.pop("db", None)
     if db is not None:
         db.close()
+
+
+@app.get("/sw.js")
+def service_worker():
+    # Served from the site root so the worker's scope covers every page.
+    response = send_from_directory(app.static_folder, "sw.js", mimetype="text/javascript")
+    response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 @app.get("/")

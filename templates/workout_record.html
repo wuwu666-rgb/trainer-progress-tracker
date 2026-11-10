@@ -32,7 +32,8 @@
   <p class="workout-notice" role="status">Draft saved. You can come back to it later.</p>
   {% endif %}
 
-  <form method="post" class="workout-editor" id="workout-editor">
+  {% if not editing %}<p class="workout-notice" id="workout-sync-status" role="status" aria-live="polite" hidden></p>{% endif %}
+  <form method="post" class="workout-editor" id="workout-editor"{% if not editing %} data-workout-id="{{ workout.id }}" data-revision="{{ revision }}" data-csrf="{{ csrf_token() }}" data-sync-url="{{ url_for('workout_sessions.sync', workout_id=workout.id, q=request.args.get('q') or none) }}"{% endif %}>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="revision" value="{{ revision }}">
     {% if trainer or editing %}
@@ -93,5 +94,6 @@
 </div>
 {% if trainer %}<template id="workout-new-exercise">{{ exercise_fields(blank_exercise, 1) }}</template>{% endif %}
 <template id="workout-new-set">{{ set_fields('__KEY__', 'reps', 1) }}</template>
+{% if not editing %}<script src="{{ url_for('static', filename='offline.js') }}" defer></script>{% endif %}
 <script src="{{ url_for('static', filename='workout.js') }}" defer></script>
 {% endblock %}
