@@ -1,0 +1,15 @@
+<div class="progress-charts">
+  <section class="chart-card" aria-labelledby="chart-weight-title">
+    <h2 id="chart-weight-title">Body weight</h2>
+    <div class="chart" id="chart-body-weight"></div>
+  </section>
+  <section class="chart-card" aria-labelledby="chart-exercise-title">
+    <h2 id="chart-exercise-title">Exercise progress</h2>
+    <label class="chart-select" id="chart-exercise-picker" hidden>Exercise
+      <select class="role-select" id="chart-exercise-select"></select>
+    </label>
+    <div class="chart" id="chart-exercise"></div>
+  </section>
+  <script type="application/json" id="chart-data">{{ chart_data|tojson }}</script>
+</div>
+<script src="{{ url_for('static', filename='charts.js') }}" defer></script>

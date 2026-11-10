@@ -19,10 +19,12 @@
   </span>
   <span aria-hidden="true">→</span>
 </a>
+{% include "progress_charts.html" %}
 <h2>Training history</h2>
 {% elif client %}
 <p>{{ client.name }}</p>
 <p><a class="button workspace-secondary" href="{{ url_for('history.body_weights', client_id=client.id) }}">Body-weight history</a></p>
+{% include "progress_charts.html" %}
 {% endif %}
 {% if g.user.role == "trainer" %}
 <a class="button" href="{{ url_for('workout_sessions.start_trainer', client_id=client.id, q=request.args.get('q') or none) }}">Record another workout</a>
