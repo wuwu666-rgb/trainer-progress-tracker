@@ -146,6 +146,94 @@ def get_workouts(client_id=None):
     return sorted(workouts, key=lambda item: (item["workout_date"], item["id"]), reverse=True)
 
 
+MAX_CHART_POINTS = 100
+
+
+def parse_number(text):
+    try:
+        value = Decimal(str(text).strip())
+    except (InvalidOperation, ValueError):
+        return None
+    return float(value) if value.is_finite() else None
+
+
+def get_body_weight_series(client_id=None):
+    scope, profile = profile_scope(client_id)
+    points = []
+    for row in g.db.execute(
+        "SELECT measurement_date, weight_lb FROM body_weights "
+        f"WHERE client_id IN ({scope}) ORDER BY measurement_date, id", (profile,),
+    ):
+        value = parse_number(row["weight_lb"])
+        if value is not None and value > 0:
+            points.append({"date": row["measurement_date"], "value": value})
+    return points[-MAX_CHART_POINTS:]
+
+
+def get_exercise_series(client_id=None):
+    """One point per workout date for every exercise recorded on at least two dates.
+
+    Rep exercises chart the heaviest weight lifted that day (sets without weight are
+    skipped); timed exercises chart the total minutes that day.
+    """
+    scope, profile = profile_scope(client_id)
+    # (exercise name, unit, date, value) for every recorded set, including older records.
+    sets = [
+        (row["name"], row["unit"], row["workout_date"], row["weight_lb"] if row["unit"] == "reps" else row["result"])
+        for row in g.db.execute(
+            "SELECT w.workout_date, e.name, e.unit, s.result, s.weight_lb "
+            "FROM workout_sessions AS w "
+            "JOIN workout_session_exercises AS e ON e.workout_id = w.id "
+            "JOIN workout_session_sets AS s ON s.exercise_id = e.id "
+            f"WHERE w.client_id IN ({scope}) AND w.completed_at IS NOT NULL AND s.result IS NOT NULL",
+            (profile,),
+        )
+    ]
+    sets += [
+        (row["exercise"], "reps", row["workout_date"], row["weight_lb"])
+        for row in g.db.execute(
+            f"SELECT exercise, workout_date, weight_lb FROM workouts WHERE client_id IN ({scope})", (profile,),
+        )
+    ]
+    sets += [
+        (row["exercise"], "minutes", row["workout_date"], row["duration_min"])
+        for row in g.db.execute(
+            f"SELECT exercise, workout_date, duration_min FROM cardio_workouts WHERE client_id IN ({scope})",
+            (profile,),
+        )
+    ]
+
+    grouped = {}
+    # Oldest first, so the earliest spelling of an exercise name is the one shown.
+    for name, unit, workout_date, raw in sorted(sets, key=lambda item: item[2]):
+        name = (name or "").strip()
+        value = parse_number(raw) if raw is not None else None
+        if not name or value is None or value <= 0:
+            continue
+        entry = grouped.setdefault((name.casefold(), unit), {"name": name, "unit": unit, "days": {}})
+        days = entry["days"]
+        days[workout_date] = max(days.get(workout_date, 0), value) if unit == "reps" else days.get(workout_date, 0) + value
+
+    series = []
+    for entry in grouped.values():
+        points = [{"date": day, "value": value} for day, value in sorted(entry["days"].items())]
+        if len(points) >= 2:
+            series.append({"name": entry["name"], "unit": entry["unit"], "points": points[-MAX_CHART_POINTS:]})
+    # Name an exercise's unit only when the same name was recorded both ways.
+    counts = {}
+    for item in series:
+        counts[item["name"].casefold()] = counts.get(item["name"].casefold(), 0) + 1
+    for item in series:
+        item["label"] = item["name"] if counts[item["name"].casefold()] == 1 else f"{item['name']} ({item['unit']})"
+    # Most recently trained first.
+    series.sort(key=lambda item: (item["points"][-1]["date"], item["name"].casefold()), reverse=True)
+    return series
+
+
+def get_chart_data(client_id=None):
+    return {"bodyWeight": get_body_weight_series(client_id), "exercises": get_exercise_series(client_id)}
+
+
 def workout_display(row):
     workout = dict(row)
     workout.setdefault("duration_min", None)
@@ -158,7 +246,9 @@ def workout_display(row):
 @bp.get("/clients/<int:client_id>/history")
 def index(client_id):
     client = get_visible_client(client_id, include_archived=True)
-    return render_template("history.html", client=client, workouts=get_workouts(client_id))
+    return render_template(
+        "history.html", client=client, workouts=get_workouts(client_id), chart_data=get_chart_data(client_id),
+    )
 
 
 

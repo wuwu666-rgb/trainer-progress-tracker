@@ -328,3 +328,14 @@ header { border-bottom-color: #e5e0d8; }
 }
 
 .target-weight summary { min-height: 44px; align-content: center; cursor: pointer; color: #625b71; }
+
+.progress-charts { display: grid; gap: 1rem; margin-block: 1rem; }
+.chart-card { margin: 0; }
+.chart-card h2 { margin-bottom: .5rem; }
+.chart-select { display: grid; gap: .25rem; max-width: 20rem; margin-bottom: .75rem; font-weight: 600; }
+.chart-svg { display: block; width: 100%; height: auto; }
+.chart-grid { stroke: #ddccef; stroke-width: 1; }
+.chart-tick { fill: #5f4a78; font-size: 12px; }
+.chart-line { fill: none; stroke: #6532a5; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.chart-dot { fill: #6532a5; stroke: white; stroke-width: 1.5; }
+.chart-caption, .chart-empty { margin: .5rem 0 0; color: #5f4a78; font-size: .9rem; }

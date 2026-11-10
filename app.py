@@ -13,7 +13,7 @@ from auth import bp as auth, csrf_token, load_user
 from clients import CLIENT_HISTORY_PROFILES, bp as clients, get_linked_profile
 from planning import bp as planning, get_assigned_plans
 from sessions import bp as sessions
-from history import bp as history, get_workouts
+from history import bp as history, get_chart_data, get_workouts
 from workout_sessions import bp as workout_sessions
 
 app = Flask(__name__)
@@ -107,7 +107,9 @@ def dashboard(page):
             profile=get_linked_profile(),
         )
     if page == "progress":
-        return render_template("history.html", dashboard_page=page, workouts=get_workouts())
+        return render_template(
+            "history.html", dashboard_page=page, workouts=get_workouts(), chart_data=get_chart_data(),
+        )
     abort(404)
 
 
