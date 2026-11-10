@@ -29,7 +29,7 @@ os.environ["REPBOOK_DATA_DIR"] = "/home/YOUR_USERNAME/repbook-data"
 from wsgi import application
 ```
 
-Enable **Force HTTPS**, click **Reload**, and open the HTTPS URL shown in **Web**. On first startup Repbook creates empty tables. Users register on the deployed site.
+Enable **Force HTTPS**, click **Reload**, and open the HTTPS URL shown in **Web**. On first startup OneTrainer creates empty tables. Users register on the deployed site.
 
 ## Publish updates and verify persistence
 

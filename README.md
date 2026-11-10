@@ -51,7 +51,7 @@ These public credentials are for local demos. Each checkout uses its own `traine
 
 ## Install on a phone
 
-Open the site over HTTPS, sign in, and choose **Account → Install Repbook**, the current label in the app. Confirm the browser’s install prompt if it appears. On iPhone, open the site in Safari and choose **Share → Add to Home Screen**. Turn on **Open as Web App** if shown, then tap **Add**.
+Open the site over HTTPS, sign in, and choose **Account → Install OneTrainer**. Confirm the browser’s install prompt if it appears. On iPhone, open the site in Safari and choose **Share → Add to Home Screen**. Turn on **Open as Web App** if shown, then tap **Add**.
 
 Signing in, recording workouts, and viewing history require an internet connection.
 
