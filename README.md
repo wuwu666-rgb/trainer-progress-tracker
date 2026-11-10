@@ -88,6 +88,6 @@ The same Codespace keeps its test database. Check that port **5000** is **Public
 
 ## Project status
 
-Offline recording, draft recovery, and synchronization are deferred.
+Public HTTPS deployment, offline recording, draft recovery, and synchronization are deferred for this release.
 
 See [Issue #1](https://github.com/wuwu666-rgb/trainer-progress-tracker/issues/1) for task ownership and completion status.

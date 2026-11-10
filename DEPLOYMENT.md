@@ -1,5 +1,7 @@
 # Free HTTPS deployment
 
+Public HTTPS deployment is deferred for this release. Keep this guide for a future release.
+
 Use a PythonAnywhere free account and its provided subdomain. The web app runs on PythonAnywhere while your computer is off. The free web app expires after one month unless renewed from the dashboard.
 
 ## First deploy
