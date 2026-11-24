@@ -84,8 +84,25 @@
         el("text", { x: M.left - 8, y: y(value) + 4, "text-anchor": "end", class: "chart-tick" }, trim(value)),
       );
     }
-    const tickIndexes = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])];
-    for (const index of tickIndexes) {
+    // Adjacent recorded dates can fall just a few pixels apart. Keep their
+    // data points, but only draw date labels when there is room for the text.
+    const candidates = [...new Set([0, points.length - 1, Math.floor((points.length - 1) / 2)])];
+    const tickIndexes = [];
+    for (const index of candidates) {
+      const position = x(times[index]);
+      const textWidth = shortDate(points[index].date).length * 7;
+      const anchor = index === 0 ? "start" : index === points.length - 1 ? "end" : "middle";
+      const left = position - (anchor === "end" ? textWidth : anchor === "middle" ? textWidth / 2 : 0);
+      const right = left + textWidth;
+      const overlaps = tickIndexes.some((other) => {
+        const otherPosition = x(times[other]);
+        const otherWidth = shortDate(points[other].date).length * 7;
+        const otherLeft = other === 0 ? otherPosition : other === points.length - 1 ? otherPosition - otherWidth : otherPosition - otherWidth / 2;
+        return left < otherLeft + otherWidth + 8 && right > otherLeft - 8;
+      });
+      if (!overlaps) tickIndexes.push(index);
+    }
+    for (const index of tickIndexes.sort((a, b) => a - b)) {
       const anchor = index === 0 ? "start" : index === points.length - 1 ? "end" : "middle";
       svg.append(el("text", {
         x: x(times[index]), y: H - 10, "text-anchor": anchor, class: "chart-tick",

@@ -91,9 +91,10 @@
   }
 
   function saveDraft(pending) {
-    if (locked) return;
+    if (locked) return false;
     const existing = load();
-    store({
+    return store({
+      ownerId: String(editor.dataset.ownerId),
       baseRevision: existing?.baseRevision ?? pageRevision,
       savedAt: Date.now(),
       entries: collect(),
@@ -214,7 +215,9 @@
         setStatus(result.error || "Your entries could not be saved. Check them and try again.");
       }
     } catch {
-      setStatus("Still offline. Your entries are saved on this device and will sync when you reconnect.");
+      setStatus("The server is unavailable. Your workout is saved on this device.", [
+        ["Retry upload", () => sync()],
+      ]);
     } finally {
       syncing = false;
     }
@@ -229,6 +232,11 @@
     }
     if (!draft) {
       showIdle();
+      return;
+    }
+    if (draft.ownerId && draft.ownerId !== String(editor.dataset.ownerId)) {
+      setStatus("These offline entries belong to another account. Sign in with the account that recorded them.");
+      locked = true;
       return;
     }
     if (draft.baseRevision === pageRevision) {
@@ -274,6 +282,9 @@
     if (load()?.pending) sync();
     else showIdle();
   });
+  window.addEventListener("focus", () => {
+    if (load()?.pending) sync();
+  });
   window.addEventListener("offline", showIdle);
 
   // Bubbling to document means workout.js's own submit handlers already ran,
@@ -289,14 +300,18 @@
       }
       return;
     }
-    if (event.target !== editor || navigator.onLine) return;
+    if (event.target !== editor) return;
     const action = event.submitter?.value;
     if (action !== "save" && action !== "complete") return;
     event.preventDefault();
     window.clearTimeout(timer);
     touched = true;
-    saveDraft(action);
-    showIdle();
+    if (!saveDraft(action)) {
+      setStatus("This browser could not store the workout. Do not close this page; check available storage and try again.");
+      return;
+    }
+    if (navigator.onLine) sync();
+    else showIdle();
   });
 
   startup();

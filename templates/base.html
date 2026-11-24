@@ -39,6 +39,7 @@
   </div>
 </nav>
 <script src="{{ url_for('static', filename='register-sw.js') }}" defer></script>
+<script src="{{ url_for('static', filename='offline-resume.js') }}" data-user-id="{{ g.user.id }}" defer></script>
 {% endif %}
 </body>
 </html>
