@@ -88,6 +88,20 @@ class ChartTests(unittest.TestCase):
         self.assertEqual(series["unit"], "minutes")
         self.assertEqual([point["value"] for point in series["points"]], [25.5, 20.0])
 
+    def test_reps_without_weight_generate_progress_chart(self):
+        self.session_workout(1, 1, "2026-11-10", "Pushups", "reps", [("7", None), ("7", None)])
+        self.session_workout(2, 1, "2026-11-17", "Pushups", "reps", [("8", None), ("9", None)])
+        (series,) = self.series(get_exercise_series, 1)
+        self.assertEqual(series["metric"], "reps")
+        self.assertEqual(series["points"], [{"date": "2026-11-10", "value": 7.0}, {"date": "2026-11-17", "value": 9.0}])
+
+    def test_one_day_with_weight_falls_back_to_reps(self):
+        self.session_workout(1, 1, "2026-11-10", "Squats", "reps", [("8", "100")])
+        self.session_workout(2, 1, "2026-11-17", "Squats", "reps", [("12", None)])
+        (series,) = self.series(get_exercise_series, 1)
+        self.assertEqual(series["metric"], "reps")
+        self.assertEqual([point["value"] for point in series["points"]], [8.0, 12.0])
+
     def test_drafts_and_single_day_exercises_are_left_out(self):
         self.session_workout(1, 1, "2024-03-01", "Squat", "reps", [("5", "100")], completed=False)
         self.session_workout(2, 1, "2024-03-02", "Squat", "reps", [("5", "100")])

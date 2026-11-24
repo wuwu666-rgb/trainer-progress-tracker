@@ -131,8 +131,8 @@
   function drawExercise() {
     const exercise = exercises[Number(select.value)];
     lineChart(exerciseChart, exercise.points, {
-      label: `${exercise.name} ${exercise.unit === "minutes" ? "total time" : "top weight"}`,
-      unit: exercise.unit === "minutes" ? "min" : "lb",
+      label: `${exercise.name} ${exercise.metric === "minutes" ? "total time" : exercise.metric === "reps" ? "maximum reps per set" : "top weight"}`,
+      unit: exercise.metric === "minutes" ? "min" : exercise.metric === "reps" ? "reps" : "lb",
     });
   }
   select.addEventListener("change", drawExercise);
